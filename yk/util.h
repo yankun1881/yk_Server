@@ -23,6 +23,10 @@ std::string BacktraceToString(int size = 64,int skip = 2,const std::string& pref
 uint64_t GetCurrentMS();
 uint64_t GetCurrentUS();
 
+//时间戳转换为string
+std::string TimeTpStr(time_t ts = time(0), const std::string& format = "%Y-%m-%d %H:%M:%S");
+//string转换为时间戳
+time_t StrToTime(const char* str, const char* format = "%Y-%m-%d %H:%M:%S");
 
 }
 #endif
