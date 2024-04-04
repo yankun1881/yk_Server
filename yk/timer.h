@@ -84,7 +84,8 @@ private:
     RWMutexType m_mutex;
     std::set<Timer::ptr,Timer::Comparator> m_timers;
     uint64_t m_previouseTime;   //上一次执行的时间
-    bool m_tickled = false;
+    
+    bool m_tickled = false;// 是否触发onTimerInsertedAtFront
 };
 
 
