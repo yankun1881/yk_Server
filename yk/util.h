@@ -28,5 +28,14 @@ std::string TimeToStr(time_t ts = time(0), const std::string& format = "%Y-%m-%d
 //string转换为时间戳
 time_t StrToTime(const char* str, const char* format = "%Y-%m-%d %H:%M:%S");
 
+class FSUtil{
+public:
+    //读取该目录下所有该后缀的文件
+    static void ListAllFile(std::vector<std::string>& files
+                            ,const std::string& path
+                            ,const std::string& subfix);
+
+};
+
 }
 #endif

@@ -1,5 +1,6 @@
 #include "../yk/log.cc"
 #include "../yk/config.cc"
+#include "../yk/util.h"
 #include <yaml-cpp/yaml.h>
 #include <string>
 #include <vector>
@@ -188,6 +189,10 @@ void testVisit(){
     });
 }
 
+void test_loadconf(){
+    yk::Config::LoadFromConfDir("conf");
+}
+
 int main(int argc,char** argv)
 {
     //YAML::Node root = YAML::LoadFile("/home/ubuntu/myServer/bin/conf/log.yml");
@@ -197,6 +202,8 @@ int main(int argc,char** argv)
     //test_yaml();
     //test_config();
     //test_class();
-    testVisit();
+    //testVisit();
+    yk::EnvMgr::GetInstance()->init(argc,argv);
+    test_loadconf();
     return 0;
 }

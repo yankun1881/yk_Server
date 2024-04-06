@@ -1,4 +1,5 @@
 #include "config.h"
+#include "env.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -6,7 +7,7 @@
 namespace yk {
 static Config::ConfigVarMap s_datas;
 
-static yk::Logger::ptr g_logger (new yk::Logger("system"));
+static yk::Logger::ptr g_logger = YK_LOG_NAME("system");
 ConfigVarBase::ptr Config::LookupBase(const std::string& name) {
     RWMtuexType::ReadLock lock(GetMutex());
     auto it = GetDatas().find(name);
@@ -61,15 +62,18 @@ void Config::LoadFromYaml(const YAML::Node& root) {
     }
 }
 
-static std::map<std::string, uint64_t> s_file2modifytime;
-
+static std::map<std::string, uint64_t> s_file2modifytime;   //防止重复加载
+static yk::Mutex s_mutex;
 void Config::LoadFromConfDir(const std::string& path, bool force) {
+    std::string absoulte_path = yk::EnvMgr::GetInstance()->getAbsolutePath(path);
     std::vector<std::string> files;
+    FSUtil::ListAllFile(files, absoulte_path, ".yml");
 
     for(auto& i : files) {
         {
             struct stat st;
             lstat(i.c_str(), &st);
+            yk::Mutex::Lock lock(s_mutex);
             if(!force && s_file2modifytime[i] == (uint64_t)st.st_mtime) {
                 continue;
             }

@@ -1,0 +1,38 @@
+logs:
+    - name: root
+      leve l: info
+      formatter: '%d%T%m%n'
+      appenders:
+          - type: FileLogAppender
+            file: log.txt
+          - type: StdoutLogAppender
+    - name: system
+      level: debug
+      formatter: '%d%T%m%n'
+      appenders:
+          - type: FileLogAppender
+            file: log.txt
+          - type: StdoutLogAppender
+
+system:
+    prot: 10231 
+    value: 15
+    int_vec: 
+      - 10
+      - 30
+    list: [1,2,3]
+
+class:
+    person:
+        name : yankun
+        age : 21
+        sex : true
+    map:
+        p1:
+            name : yankun
+            age : 21
+            sex : true
+        p2: 
+            name : yk
+            age : 20
+            sex : true
