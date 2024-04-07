@@ -42,7 +42,9 @@ set(
     http/http_servlet.cc
     http/http_connection.cc
     yk/uri.cc   
-    
+    yk/daemon.cc
+    yk/env.cc
+    yk/application.cc    
 )
 add_library(yk SHARED ${LIB_SRC})
 #add_library(yk_static  STATIC$ {LIB_SRC})
@@ -58,80 +60,32 @@ set(LIB_LIB
     yaml-cpp
     )
     
-add_executable(test tests/test.cc)
-add_dependencies(test ${LIB_LIB})
-target_link_libraries(test yk ${LIB_LIB})
+function(add_test_executable NAME)
+    add_executable(${NAME} tests/${NAME}.cc)
+    add_dependencies(${NAME} yk ${LIB_LIB})
+    target_link_libraries(${NAME} yk ${LIB_LIB})
+endfunction()
 
-
-add_executable(test_config tests/test_config.cc)
-add_dependencies(test_config yk ${LIB_LIB})
-target_link_libraries(test_config yk ${LIB_LIB})
-
-
-
-add_executable(test_thread tests/test_thread.cc)
-add_dependencies(test_thread yk ${LIB_LIB}) 
-target_link_libraries(test_thread yk ${LIB_LIB})
-
-add_executable(test_util tests/test_util.cc)
-add_dependencies(test_util yk ${LIB_LIB}) 
-target_link_libraries(test_util yk ${LIB_LIB})
-
-add_executable(test_fiber tests/test_fiber.cc)
-add_dependencies(test_fiber yk ${LIB_LIB}) 
-target_link_libraries(test_fiber yk ${LIB_LIB})
-
-add_executable(test_scheduler tests/test_scheduler.cc)
-add_dependencies(test_scheduler yk ${LIB_LIB}) 
-target_link_libraries(test_scheduler yk ${LIB_LIB})
-
-add_executable(test_iomanager tests/test_iomanager.cc)
-add_dependencies(test_iomanager yk ${LIB_LIB}) 
-target_link_libraries(test_iomanager yk ${LIB_LIB})
-
-add_executable(test_hook tests/test_hook.cc)
-add_dependencies(test_hook yk ${LIB_LIB}) 
-target_link_libraries(test_hook yk ${LIB_LIB})
-
-
-add_executable(test_address tests/test_address.cc)
-add_dependencies(test_address yk ${LIB_LIB}) 
-target_link_libraries(test_address yk ${LIB_LIB})
-
-add_executable(test_socket tests/test_socket.cc)
-add_dependencies(test_socket yk ${LIB_LIB}) 
-target_link_libraries(test_socket yk ${LIB_LIB})
-
-add_executable(test_bytearray tests/test_bytearray.cc)
-add_dependencies(test_bytearray yk ${LIB_LIB}) 
-target_link_libraries(test_bytearray yk ${LIB_LIB})
-
-add_executable(test_http tests/test_http.cc)
-add_dependencies(test_http yk ${LIB_LIB}) 
-target_link_libraries(test_http yk ${LIB_LIB})
-
-add_executable(test_tcp_server tests/test_tcp_server.cc)
-add_dependencies(test_tcp_server yk ${LIB_LIB}) 
-target_link_libraries(test_tcp_server yk ${LIB_LIB})
-
-add_executable(echo_server tests/echo_server.cc)
-add_dependencies(echo_server yk ${LIB_LIB}) 
-target_link_libraries(echo_server yk ${LIB_LIB})
-
-
-add_executable(test_http_server tests/test_http_server.cc)
-add_dependencies(test_http_server yk ${LIB_LIB}) 
-target_link_libraries(test_http_server yk ${LIB_LIB})
-
-
-add_executable(test_http_connection tests/test_http_connection.cc)
-add_dependencies(test_http_connection yk ${LIB_LIB}) 
-target_link_libraries(test_http_connection yk ${LIB_LIB})
-
-
-add_executable(test_uri tests/test_uri.cc)
-add_dependencies(test_uri yk ${LIB_LIB}) 
-target_link_libraries(test_uri yk ${LIB_LIB})
+add_test_executable(test)
+add_test_executable(test_config)
+add_test_executable(test_thread)
+add_test_executable(test_fiber)
+add_test_executable(test_scheduler)
+add_test_executable(test_iomanager)
+add_test_executable(test_hook)
+add_test_executable(test_address)
+add_test_executable(test_socket)
+add_test_executable(test_bytearray)
+add_test_executable(test_http)
+add_test_executable(test_tcp_server)
+add_test_executable(echo_server)
+add_test_executable(test_http_server)
+add_test_executable(test_http_connection)
+add_test_executable(test_uri)
+add_test_executable(http_server)
+add_test_executable(test_daemon)
+add_test_executable(test_env)
+add_test_executable(test_application)
 
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)

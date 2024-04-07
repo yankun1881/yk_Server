@@ -4,7 +4,7 @@
 
  - 协程模块使用ucontext实现了协程库。协程调度采用非对称调度方式。
  - IO协程调度模块，封装了epoll（Linux），并支持定时器功能（使用epoll实现定时器，精度毫秒级）
- - 采用Ragel（有限状态机，性能媲美汇编），实现了HTTP/1.1的简单协议实现和uri的解析
+ - 采用[http-parser](https://github.com/nodejs/http-parser)，实现了HTTP/1.1的简单协议实现和uri的解析
 
 ## 1.日志模块
 
@@ -58,8 +58,21 @@ yk::IOManager iom(2); //两个线程
 
 ## 7.Hook模块
 hook系统底层和socket相关的API，socket io相关的API，以及sleep系列的API。hook的开启控制是线程粒度的。可以自由选择。
+
 ## 8.Socket模块
 封装了Socket类，提供所有socket API功能，统一封装了地址类，将IPv4，IPv6，Unix地址统一起来。并且提供域名，IP解析功能。
 
+## 9.TcpServer模块
+基于Socket类，封装了一个通用的TcpServer的服务器类，提供简单的API，使用便捷，可以快速绑定一个或多个地址，启动服务，监听端口，accept连接，处理socket连接等功能。具体业务功能更的服务器实现，只需要继承该类就可以快速实现
 
+## 10.HTTP模块
+采用Ragel（有限状态机，性能媲美汇编），实现了HTTP/1.1的简单协议实现和uri的解析。基于SocketStream实现了HttpConnection(HTTP的客户端)和HttpSession(HTTP服务器端的链接）。基于TcpServer实现了HttpServer。提供了完整的HTTP的客户端API请求功能，HTTP基础API服务器功能
 
+## 11.Servlet模块
+仿照java的servlet，实现了一套Servlet接口，实现了ServletDispatch，FunctionServlet。NotFoundServlet。支持uri的精准匹配，模糊匹配等功能。和HTTP模块，一起提供HTTP服务器功能
+
+## 12.守护进程模块
+父进程通过waitpid()检测子进程是否退出，如果子进程退出，则重新拉起子进程
+
+## 13.服务器启动模块
+服务器启动的读取配置和启动，实现了读取日志配置，服务器类型配置，线程配置。
