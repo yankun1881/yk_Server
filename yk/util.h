@@ -34,7 +34,10 @@ public:
     static void ListAllFile(std::vector<std::string>& files
                             ,const std::string& path
                             ,const std::string& subfix);
-
+    
+    //检查给定的进程 ID 文件是否指定的进程正在运行
+    static bool IsRunningPidfile(const std::string& pidfile);
+    static bool Mkdir(const std::string& dirname);
 };
 
 }

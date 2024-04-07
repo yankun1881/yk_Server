@@ -36,7 +36,6 @@ static int real_daemon(int argc, char** argv,
     /*if(daemon(1, 0) == -1){   //这里是直接创建子进程，应该是linux版本不同
         YK_LOG_INFO(g_logger) << "daemo errno ";
     }*/
-    YK_LOG_INFO(g_logger) << "daemo errno ";
     ProcessInfoMgr::GetInstance()->parent_id = getpid();
     ProcessInfoMgr::GetInstance()->parent_start_time = time(0);
     while(true) {

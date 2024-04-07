@@ -1,0 +1,9 @@
+http_servers:
+  - address: ["10.0.16.9:8080"]
+    keepalive: 1
+    timeout: 1000
+    name: yk/1.1
+  - address: ["10.0.16.9:80"]
+    keepalive: 0
+    timeout: 2000
+    name: yk/2.1
