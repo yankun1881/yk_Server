@@ -256,24 +256,35 @@ bool IOManager::stopping(uint64_t& timeout){
             &&Scheduler::stopping();
 }
 
-void IOManager::idle(){
+// 空闲状态处理逻辑
+void IOManager::idle() {
+    // 记录空闲状态信息到日志
     YK_LOG_DEBUG(g_logger) << "idle";
+    // 定义最大事件数常量
     const uint64_t MAX_EVNETS = 256;
+    // 创建 epoll_event 数组用于存放事件
     epoll_event* events = new epoll_event[MAX_EVNETS]();
-    std::shared_ptr<epoll_event> shared_events(events,[](epoll_event* ptr){
+    // 创建 shared_ptr 用于释放内存
+    std::shared_ptr<epoll_event> shared_events(events, [](epoll_event* ptr){
         delete[] ptr;
     });
-    while (true) {
+
+    // 循环执行空闲状态逻辑
+    while(true) {
+        // 获取下一个定时器的超时时间
         uint64_t next_timeout = 0;
-        if(stopping(next_timeout)) {
-            YK_LOG_ERROR(g_logger) << "name=" << getName() << "idle stopping exit";
-            break;  
-        }   
-         
-        // 阻塞在epoll_wait上，等待事件发生
+        // 如果当前线程即将停止，则退出循环
+        if(YK_UNLIKELY(stopping(next_timeout))) {
+            YK_LOG_INFO(g_logger) << "name=" << getName()
+                                     << " idle stopping exit";
+            break;
+        }
+
         int rt = 0;
+        // 执行 epoll_wait 等待事件
         do {
-            static const int MAX_TIMEOUT = 3000;    //最大超时时间
+            static const int MAX_TIMEOUT = 3000;
+            // 如果下一个超时时间不为无穷大，则限制在最大超时时间内
             if(next_timeout != ~0ull) {
                 next_timeout = (int)next_timeout > MAX_TIMEOUT
                                 ? MAX_TIMEOUT : next_timeout;
@@ -281,96 +292,92 @@ void IOManager::idle(){
                 next_timeout = MAX_TIMEOUT;
             }
             rt = epoll_wait(m_epfd, events, MAX_EVNETS, (int)next_timeout);
+            // 如果返回值小于0且错误为 EINTR，则继续等待
             if(rt < 0 && errno == EINTR) {
             } else {
                 break;
             }
         } while(true);
-        
-        std::vector<std::function<void()>> cbs;
+
+        // 定义存储定时器触发回调函数的容器
+        std::vector<std::function<void()> > cbs;
+        // 遍历定时器，查找已经超时的定时器并触发回调
         listExpiredCb(cbs);
-        if(!cbs.empty()){
-//            YK_LOG_DEBUG(g_logger) << "on time cbs.size =  " << cbs.size();
-            schedule(cbs.begin(),cbs.end());
+        // 如果定时器回调函数不为空，则调度执行
+        if(!cbs.empty()) {
+            schedule(cbs.begin(), cbs.end());
             cbs.clear();
         }
-        
-        /*static const int MAX_TIMEOUT = 5000;
-        int rt = epoll_wait(m_epfd, events, 64, MAX_TIMEOUT);
-        if(rt < 0) {
-            if(errno == EINTR) {
-                continue;
-            }
-            YK_LOG_ERROR(g_logger) << "epoll_wait(" << m_epfd << ") (rt="
-                                      << rt << ") (errno=" << errno << ") (errstr:" << strerror(errno) << ")";
-            break;
-        }
-        */
 
-        // 遍历所有发生的事件，根据epoll_event的私有指针找到对应的FdContext，进行事件处理
-        for (int i = 0; i < rt; ++i) {
-            epoll_event &event = events[i];
-            if (event.data.fd == m_tickleFds[0]) {
-                // ticklefd[0]用于通知协程调度，这时只需要把管道里的内容读完即可，本轮idle结束Scheduler::run会重新执行协程调度
+        // 遍历 epoll_wait 返回的事件
+        for(int i = 0; i < rt; ++i) {
+            epoll_event& event = events[i];
+            // 如果事件是由 tickle 触发的，则清空 tickle 管道
+            if(event.data.fd == m_tickleFds[0]) {
                 uint8_t dummy[256];
-                while (read(m_tickleFds[0], dummy, sizeof(dummy)) > 0);
+                while(read(m_tickleFds[0], dummy, sizeof(dummy)) > 0);
                 continue;
             }
-             
-            // 通过epoll_event的私有指针获取FdContext
-            FdContext *fd_ctx = (FdContext *)event.data.ptr;
+
+            // 获取事件对应的上下文信息
+            FdContext* fd_ctx = (FdContext*)event.data.ptr;
+            // 上锁保护上下文信息
             FdContext::MutexType::Lock lock(fd_ctx->mutex);
-            /**
-             * EPOLLERR: 出错，比如写读端已经关闭的pipe
-             * EPOLLHUP: 套接字对端关闭
-             * 出现这两种事件，应该同时触发fd的读和写事件，否则有可能出现注册的事件永远执行不到的情况
-             */
-            if (event.events & (EPOLLERR | EPOLLHUP)) {
+            // 如果事件是错误或挂起事件，则转换为读写事件
+            if(event.events & (EPOLLERR | EPOLLHUP)) {
                 event.events |= (EPOLLIN | EPOLLOUT) & fd_ctx->events;
             }
+            // 定义真正触发的事件类型
             int real_events = NONE;
-            if (event.events & EPOLLIN) {
+            // 如果有读事件，则添加到触发事件中
+            if(event.events & EPOLLIN) {
                 real_events |= READ;
             }
-            if (event.events & EPOLLOUT) {
+            // 如果有写事件，则添加到触发事件中
+            if(event.events & EPOLLOUT) {
                 real_events |= WRITE;
             }
- 
-            if ((fd_ctx->events & real_events) == NONE) {
+
+            // 如果事件无效，则继续下一个事件
+            if((fd_ctx->events & real_events) == NONE) {
                 continue;
             }
- 
-            // 剔除已经发生的事件，将剩下的事件重新加入epoll_wait，
-            // 如果剩下的事件为0，表示这个fd已经不需要关注了，直接从epoll中删除
-            int left_events = (fd_ctx->events & ~real_events);  
-            int op          = left_events ? EPOLL_CTL_MOD : EPOLL_CTL_DEL;
-            event.events    = EPOLLET | left_events;
- 
+
+            // 更新剩余的事件类型
+            int left_events = (fd_ctx->events & ~real_events);
+            // 根据剩余事件类型选择 EPOLL_CTL_MOD 或 EPOLL_CTL_DEL 操作
+            int op = left_events ? EPOLL_CTL_MOD : EPOLL_CTL_DEL;
+            event.events = EPOLLET | left_events;
+
+            // 执行 epoll_ctl 更新事件
             int rt2 = epoll_ctl(m_epfd, op, fd_ctx->fd, &event);
-            if (rt2) {
-                YK_LOG_ERROR(g_logger) << "epoll_ctl(" << m_epfd <<", "
-                    <<op << "," << fd_ctx << "," <<event.events << "):"
-                    << rt << "  (" << errno << ") (" << strerror(errno) <<")";
+            // 如果操作失败，则记录错误日志
+            if(rt2) {
+                YK_LOG_ERROR(g_logger) << "epoll_ctl(" << m_epfd << ", "
+                    << rt2 << " (" << errno << ") (" << strerror(errno) << ")";
                 continue;
             }
- 
-            // 处理已经发生的事件，也就是让调度器调度指定的函数或协程
-            if (real_events & READ) {
+            // 触发读事件
+            if(real_events & READ) {
                 fd_ctx->triggerEvent(READ);
                 --m_pendingEventCount;
             }
-            if (real_events & WRITE) {
+            // 触发写事件
+            if(real_events & WRITE) {
                 fd_ctx->triggerEvent(WRITE);
                 --m_pendingEventCount;
             }
-    
         }
+
+        // 切出当前协程
         Fiber::ptr cur = Fiber::GetThis();
         auto raw_ptr = cur.get();
         cur.reset();
+
         raw_ptr->swapOut();
-    }    
+    }
 }
+
 
 void IOManager::onTimerInsertedAtFront(){
     tickle();

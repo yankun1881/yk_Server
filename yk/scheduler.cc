@@ -128,63 +128,88 @@ void Scheduler::setThis() {
 
 // 调度器运行逻辑
 void Scheduler::run() {
+    // 记录调度器运行信息到日志
     YK_LOG_DEBUG(g_logger) << m_name << " run";
+    // 启用 Hook 机制，用于协程上下文切换时的额外操作
     set_hook_enable(true);
+    // 设置当前线程的调度器对象为当前对象
     setThis();
+    // 如果当前线程不是根线程，则将当前主协程设置为当前协程
     if(yk::GetThreadId() != m_rootThread) {
         t_scheduler_fiber = Fiber::GetThis().get();
     }
-   // 创建一个空闲状态的协程对象
+    
+    // 创建一个空闲状态的协程对象
     Fiber::ptr idle_fiber(new Fiber(std::bind(&Scheduler::idle, this)));
+    // 创建一个协程对象，用于保存需要执行的回调函数
     Fiber::ptr cb_fiber;
-
     FiberAndThread ft;
+    // 循环执行调度逻辑
     while(true) {
+        // 重置协程和线程状态信息
         ft.reset();
+        // 初始化唤醒标志和活跃状态标志
         bool tickle_me = false;
         bool is_active = false;
         {
+            // 对线程安全的协程队列进行加锁保护
             MutexType::Lock lock(m_mutex);
+            // 遍历协程队列，尝试获取要执行的协程
             auto it = m_fibers.begin();
             while(it != m_fibers.end()) {
+                // 如果协程指定了线程，并且不是当前线程，则跳过当前协程
                 if(it->thread != -1 && it->thread != yk::GetThreadId()) {
                     ++it;
+                    // 标记需要唤醒调度器
                     tickle_me = true;
                     continue;
                 }
-
+                
+                // 断言协程或回调函数不能为空
                 YK_ASSERT1(it->fiber || it->cb);
+                // 如果协程已经在执行状态，则继续下一个协程
                 if(it->fiber && it->fiber->getState() == Fiber::EXEC) {
                     ++it;
                     continue;
                 }
-
+                
+                // 获取到要执行的协程
                 ft = *it;
+                // 从协程队列中移除该协程
                 m_fibers.erase(it++);
+                // 增加活跃线程计数
                 ++m_activeThreadCount;
+                // 设置活跃状态标志
                 is_active = true;
                 break;
             }
+            // 标记需要唤醒调度器
             tickle_me |= it != m_fibers.end();
         }
 
+        // 唤醒调度器
         if(tickle_me) {
             tickle();
         }
 
+        // 执行获取到的协程或回调函数
         if(ft.fiber && (ft.fiber->getState() != Fiber::TERM
                         && ft.fiber->getState() != Fiber::EXCEPT)) {
             ft.fiber->swapIn();
             --m_activeThreadCount;
 
+            // 如果协程状态为就绪，则重新调度该协程
             if(ft.fiber->getState() == Fiber::READY) {
                 schedule(ft.fiber);
             } else if(ft.fiber->getState() != Fiber::TERM
                     && ft.fiber->getState() != Fiber::EXCEPT) {
+                // 如果协程状态不是终止或异常，将协程状态设置为挂起
                 ft.fiber->m_state = Fiber::HOLD;
             }
+            // 重置协程状态信息
             ft.reset();
         } else if(ft.cb) {
+            // 如果存在回调函数，则执行回调函数
             if(cb_fiber) {
                 cb_fiber->reset(ft.cb);
             } else {
@@ -193,29 +218,41 @@ void Scheduler::run() {
             ft.reset();
             cb_fiber->swapIn();
             --m_activeThreadCount;
+            // 根据协程状态进行处理
             if(cb_fiber->getState() == Fiber::READY) {
+                // 如果回调函数协程状态为就绪，则重新调度该协程
                 schedule(cb_fiber);
                 cb_fiber.reset();
             } else if(cb_fiber->getState() == Fiber::EXCEPT
                     || cb_fiber->getState() == Fiber::TERM) {
+                // 如果回调函数协程状态为异常或终止，则重置协程对象
                 cb_fiber->reset(nullptr);
             } else {
+                // 否则将协程状态设置为挂起
                 cb_fiber->m_state = Fiber::HOLD;
                 cb_fiber.reset();
             }
         } else {
+            // 如果没有获取到协程或回调函数
             if(is_active) {
+                // 如果当前是活跃状态，则减少活跃线程计数，并继续下一个循环
                 --m_activeThreadCount;
                 continue;
             }
+            // 如果当前是空闲状态
             if(idle_fiber->getState() == Fiber::TERM) {
+                // 如果空闲协程已经终止，则记录日志并退出循环
                 YK_LOG_INFO(g_logger) << "idle fiber term";
                 break;
             }
 
+            // 增加空闲线程计数
             ++m_idleThreadCount;
+            // 切换到空闲协程执行
             idle_fiber->swapIn();
+            // 减少空闲线程计数
             --m_idleThreadCount;
+            // 如果空闲协程状态不是终止或异常，则将协程状态设置为挂起
             if(idle_fiber->getState() != Fiber::TERM
                     && idle_fiber->getState() != Fiber::EXCEPT) {
                 idle_fiber->m_state = Fiber::HOLD;
@@ -223,6 +260,7 @@ void Scheduler::run() {
         }
     }
 }
+
 
 // 唤醒调度器
 void Scheduler::tickle() {
