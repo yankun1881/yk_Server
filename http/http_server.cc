@@ -1,5 +1,6 @@
 
 #include "http_server.h"
+#include "http_servlet.h"
 #include "yk/log.h"
 
 namespace yk{
@@ -9,11 +10,13 @@ namespace http
 static yk::Logger::ptr g_logger = YK_LOG_NAME("system");
 
 HttpServer::HttpServer(bool keepalive
-            ,IOManager* worker
-            ,IOManager* accept_worker)
-            :TcpServer(worker,accept_worker)
-            ,m_isKeepalive(keepalive){
-            m_dispatch.reset(new ServletDispatch);
+               ,yk::IOManager* worker
+               ,yk::IOManager* io_worker
+               ,yk::IOManager* accept_worker)
+    :TcpServer(worker, io_worker, accept_worker)
+    ,m_isKeepalive(keepalive) {
+    m_dispatch.reset(new ServletDispatch);
+    setType("http");
 }
 
 void HttpServer::handleClient(Socket::ptr client){

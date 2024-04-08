@@ -12,14 +12,15 @@ static yk::ConfigVar<uint64_t>::ptr g_tcp_server_read_timeout =
         "tcp server read timeout");
 
 
-TcpServer::TcpServer(yk::IOManager* woker,
-                yk::IOManager* accept_woker)
-    :m_worker(woker)
-    ,m_acceptWorker(accept_woker)
+TcpServer::TcpServer(yk::IOManager* worker,
+                    yk::IOManager* io_worker,
+                    yk::IOManager* accept_worker)
+    :m_worker(worker)
+    ,m_ioWorker(io_worker)
+    ,m_acceptWorker(accept_worker)
     ,m_readTimeout(g_tcp_server_read_timeout->getValue())
     ,m_name("yk/1.0.0")
-    ,m_isStop(true){
-
+    ,m_isStop(true) {
 }
 
 bool TcpServer::bind(yk::Address::ptr addr){

@@ -12,11 +12,11 @@ namespace http
     
 class HttpServer : public TcpServer {
 public:
-    typedef std::shared_ptr<HttpServer> ptr;
-    HttpServer(bool keepalive = false
-            ,IOManager* worker = IOManager::GetThis()
-            ,IOManager* accept_worker = IOManager::GetThis() );
 
+    HttpServer(bool keepalive = false
+               ,yk::IOManager* worker = yk::IOManager::GetThis()
+               ,yk::IOManager* io_worker = yk::IOManager::GetThis()
+               ,yk::IOManager* accept_worker = yk::IOManager::GetThis());
     ServletDispatch::ptr getServletDispatch() const { return m_dispatch;}
 
 protected:
