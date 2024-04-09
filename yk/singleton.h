@@ -7,7 +7,7 @@
 
 namespace yk {
 
-template<class T, class X = void, int N = 0>
+template<class T>
 class Singleton {
 public:
     /**
@@ -19,7 +19,7 @@ public:
     }
 };
 
-template<class T, class X = void, int N = 0>
+template<class T>
 class SingletonPtr {
 public:
     /**

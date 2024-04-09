@@ -8,7 +8,7 @@
 #include<vector>
 #include<string>
 #include <sys/time.h>
-
+#include <boost/lexical_cast.hpp>
 namespace yk{
 
 pid_t GetThreadId();

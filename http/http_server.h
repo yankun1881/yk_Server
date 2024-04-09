@@ -12,7 +12,7 @@ namespace http
     
 class HttpServer : public TcpServer {
 public:
-
+    typedef std::shared_ptr<HttpServer> ptr;
     HttpServer(bool keepalive = false
                ,yk::IOManager* worker = yk::IOManager::GetThis()
                ,yk::IOManager* io_worker = yk::IOManager::GetThis()

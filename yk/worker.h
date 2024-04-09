@@ -72,30 +72,6 @@ public:
     Scheduler::ptr get(const std::string& name);  
     // 根据名称获取 IOManager 类型的调度器
     IOManager::ptr getAsIOManager(const std::string& name); 
-
-    template<class FiberOrCb>
-    void schedule(const std::string& name, FiberOrCb fc, int thread = -1) {
-        auto s = get(name);
-        if(s) {
-            s->schedule(fc, thread);
-        } else {
-            static sylar::Logger::ptr s_logger = SYLAR_LOG_NAME("system");
-            SYLAR_LOG_ERROR(s_logger) << "schedule name=" << name
-                << " not exists";
-        }
-    }
-
-    template<class Iter>
-    void schedule(const std::string& name, Iter begin, Iter end) {
-        auto s = get(name);
-        if(s) {
-            s->schedule(begin, end);
-        } else {
-            static sylar::Logger::ptr s_logger = SYLAR_LOG_NAME("system");
-            SYLAR_LOG_ERROR(s_logger) << "schedule name=" << name
-                << " not exists";
-        }
-    }
     // 初始化工作线程管理器
     bool init();
     // 使用参数初始化         
@@ -108,7 +84,6 @@ public:
     std::ostream& dump(std::ostream& os);     
     // 获取调度器数量
     uint32_t getCount();  
-
 private:
     std::map<std::string, std::vector<Scheduler::ptr>> m_datas;  // 调度器映射表
     bool m_stop;                    // 停止标志
