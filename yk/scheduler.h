@@ -45,6 +45,7 @@ public:
     void stop();
 
     bool hasIdleThreads() { return m_idleThreadCount > 0; }
+    std::ostream& dump(std::ostream& os);
 
     template<class FiberOrCb>
     void schedule(FiberOrCb fc, int thread = -1){
