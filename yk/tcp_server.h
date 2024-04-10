@@ -7,7 +7,7 @@
 #include "iomanager.h"
 #include "socket.h"
 #include "noncopyable.h"
-
+#include "config.h"
 namespace yk
 {
 
@@ -128,7 +128,7 @@ public:
     void setName(const std::string& v){m_name = v;}
     std::string getType()const {return m_type;}
     void setType(const std::string& v){m_type = v;}
-
+    std::vector<Socket::ptr> getSocks() const { return m_socks;}
     bool isStop(){return m_isStop;}
 protected:
     virtual void handleClient(Socket::ptr client);

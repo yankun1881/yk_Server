@@ -45,6 +45,9 @@ set(
     yk/daemon.cc
     yk/env.cc
     yk/application.cc    
+    yk/module.cc
+    yk/library.cc
+    yk/worker.cc
 )
 add_library(yk SHARED ${LIB_SRC})
 #add_library(yk_static  STATIC$ {LIB_SRC})

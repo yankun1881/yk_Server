@@ -23,7 +23,7 @@ private:
     int m_argc = 0;
     char** m_argv = nullptr;
 
-    std::vector<http::HttpServer::ptr>  m_httpservers;
+    std::map<std::string, std::vector<TcpServer::ptr> > m_servers;
     IOManager::ptr m_mainIOManager;
     static Application* s_instance;
 
