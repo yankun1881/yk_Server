@@ -20,6 +20,7 @@ HttpServer::HttpServer(bool keepalive
 }
 
 void HttpServer::handleClient(Socket::ptr client){
+    YK_LOG_DEBUG(g_logger) << "handleClient " << *client;
     HttpSession::ptr session(new HttpSession(client));
     do{
         auto req = session->recvRequest();
@@ -31,11 +32,12 @@ void HttpServer::handleClient(Socket::ptr client){
         }
 
         HttpResponse::ptr rsp( new HttpResponse(req->getVersion(),req->isClose()||!m_isKeepalive));
-
-        m_dispatch->handle(req,rsp,session);
-    
+        rsp->setHeader("Server", getName());
+        m_dispatch->handle(req, rsp, session);
         session->sendResponse(rsp);
-
+        if(!m_isKeepalive || req->isClose()) {
+            break;
+        }
     }while(m_isKeepalive);
     session->close();
 }
