@@ -74,11 +74,11 @@ std::string HttpRequest::getHeader(const std::string& key
     return it == m_headers.end() ? def : it->second;
 }
 
-/*std::shared_ptr<HttpResponse> HttpRequest::createResponse() {
+std::shared_ptr<HttpResponse> HttpRequest::createResponse() {
     HttpResponse::ptr rsp(new HttpResponse(getVersion()
                             ,isClose()));
     return rsp;
-}*/
+}
 
 std::string HttpRequest::getParam(const std::string& key
                             ,const std::string& def) {

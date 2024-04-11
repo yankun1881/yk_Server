@@ -202,7 +202,7 @@ public:
 
     HttpRequest(uint8_t version = 0x11, bool close = true);
 
-    static std::shared_ptr<HttpResponse> createResponse();
+    std::shared_ptr<HttpResponse> createResponse();
 
     uint8_t getVersion() const { return m_version;}
     HttpMethod getMethod() const {return m_method;}
@@ -216,7 +216,7 @@ public:
 
     void setMethod(HttpMethod v){m_method = v;}
     void setVersion(uint8_t v) {m_version = v;}
-
+    void setWebsocket(bool v){m_websocket = v;}
     void setPath(const std::string& v) {m_path = v;}
     void setQuery(const std::string& v) {m_query = v;}
     void setFragment(const std::string& v) {m_fragment = v;}
@@ -237,7 +237,6 @@ public:
     void setHeader(const std::string& key, const std::string& val);
     void setParam(const std::string& key, const std::string& val);
     void setCookie(const std::string& key, const std::string& val);
-    
     void delHeader(const std::string& key);
     void delParam(const std::string& key);
     void delCookie(const std::string& key);

@@ -89,6 +89,12 @@ bool CheckGetParamValue(const Map& m, const K& k, V& v) {
     return false;
 }
 
+//base64encode
+std::string base64encode(const std::string& input);
+
+std::string random_string(int length);
+
+std::string sha1sum(const std::string& file_path);
 
 }
 #endif
