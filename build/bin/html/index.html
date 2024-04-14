@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>yk Chat Room</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            max-width: 400px;
+            width: 100%;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            box-sizing: border-box;
+            position: relative;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #666;
+        }
+        input[type="text"] {
+            width: calc(100% - 65px);
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4caf50;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #message {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+        #nicknameDisplay {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 16px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>yk Chat Room</h1>
+        <div id="nicknameDisplay"></div>
+        <div id="message"></div>
+        <div id="loginForm">
+            <label for="nickname">昵称：</label>
+            <input id="nickname" type="text">
+            <button id="loginBtn">登录</button>
+        </div>
+        <div id="chatForm" style="display: none;">
+            <label for="chatMsg">聊天信息：</label>
+            <input id="chatMsg" type="text">
+            <button id="sendBtn">发送</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var websocket = null;
+            var messageContainer = document.getElementById("message");
+            var nicknameDisplay = document.getElementById("nicknameDisplay");
+            var loginForm = document.getElementById("loginForm");
+            var chatForm = document.getElementById("chatForm");
+
+            function showMessage(msg) {
+                messageContainer.innerHTML += msg + "<br/>";
+                messageContainer.scrollTop = messageContainer.scrollHeight;
+            }
+
+            function login() {
+                var nicknameInput = document.getElementById('nickname');
+                var nickname = nicknameInput.value.trim();
+                if (!nickname) {
+                    alert("请输入昵称");
+                    return;
+                }
+
+                websocket = new WebSocket("ws://106.54.20.64:8080/yk/chat");
+
+                websocket.onerror = function() {
+                    showMessage("连接错误");
+                }
+
+                websocket.onopen = function() {
+                    var loginData = {
+                        type: "login_request",
+                        name: nickname
+                    };
+                    websocket.send(JSON.stringify(loginData));
+                    nicknameDisplay.textContent = "昵称：" + nickname;
+                    loginForm.style.display = "none";
+                    chatForm.style.display = "block";
+                }
+
+                websocket.onmessage = function(e) {
+                    var data = JSON.parse(e.data);
+                    switch (data.type) {
+                        case "user_enter":
+                            showMessage("[" + data.time + "][" + data.name + "] 加入聊天室");
+                            break;
+                        case "user_leave":
+                            showMessage("[" + data.time + "][" + data.name + "] 离开聊天室");
+                            break;
+                        case "msg":
+                            showMessage("[" + data.time + "][" + data.name + "] " + data.msg);
+                            break;
+                        case "login_response":
+                            showMessage("[" + data.result + "][" + data.msg + "]");
+                            break;
+                    }
+                }
+
+                websocket.onclose = function() {
+                    showMessage("服务器断开");
+                }
+            }
+
+            function sendMessage() {
+                var msgInput = document.getElementById('chatMsg');
+                var message = msgInput.value.trim();
+                if (!message) {
+                    alert("请输入消息");
+                    return;
+                }
+
+                var messageData = {
+                    type: "send_request",
+                    msg: message
+                };
+                websocket.send(JSON.stringify(messageData));
+                msgInput.value = '';
+            }
+
+            document.getElementById("loginBtn").addEventListener("click", login);
+            document.getElementById("sendBtn").addEventListener("click", sendMessage);
+        });
+    </script>
+</body>
+</html>
