@@ -9,6 +9,7 @@
 #include<string>
 #include <sys/time.h>
 #include <boost/lexical_cast.hpp>
+#include <jsoncpp/json/json.h>
 namespace yk{
 
 pid_t GetThreadId();
@@ -90,11 +91,13 @@ bool CheckGetParamValue(const Map& m, const K& k, V& v) {
 }
 
 //base64encode
-std::string base64encode(const std::string& input);
+std::string base64encode(const std::string& data);
+std::string base64encode(const void* data, size_t len);
 
 std::string random_string(int length);
 
 std::string sha1sum(const std::string& file_path);
 
+std::string sha1sum(const void *data, size_t len);
 }
 #endif

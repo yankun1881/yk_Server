@@ -10,7 +10,7 @@
 #include "yk/log.h"
 #include "yk/module.h"
 #include "yk/worker.h"
-
+#include "http/ws_server.h"
 namespace yk {
 
 static yk::Logger::ptr g_logger = YK_LOG_NAME("system");
@@ -274,6 +274,9 @@ int Application::run_fiber(){
         TcpServer::ptr server;
         if(i.type == "http") {
             server.reset(new yk::http::HttpServer(i.keepalive,
+                            process_worker, io_worker, accept_worker));
+        }else if(i.type == "ws") {
+            server.reset(new yk::http::WSServer(
                             process_worker, io_worker, accept_worker));
         }else {
             YK_LOG_ERROR(g_logger) << "invalid server type=" << i.type

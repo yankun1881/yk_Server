@@ -180,47 +180,49 @@ bool FSUtil::Mkdir(const std::string& dirname) {
     return false;
 }
 
-static const std::string base64_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-std::string base64encode(const std::string& input) {
-    std::string encoded;
-    int i = 0;
-    int j = 0;
-    unsigned char char_array_3[3];
-    unsigned char char_array_4[4];
 
-    for (const auto& c : input) {
-        char_array_3[i++] = c;
-        if (i == 3) {
-            char_array_4[0] = (char_array_3[0] & 0xfc) >> 2;
-            char_array_4[1] = ((char_array_3[0] & 0x03) << 4) + ((char_array_3[1] & 0xf0) >> 4);
-            char_array_4[2] = ((char_array_3[1] & 0x0f) << 2) + ((char_array_3[2] & 0xc0) >> 6);
-            char_array_4[3] = char_array_3[2] & 0x3f;
-            for (i = 0; i < 4; i++) {
-                encoded += base64_chars[char_array_4[i]];
-            }
-            i = 0;
+std::string base64encode(const std::string& data) {
+    return base64encode(data.c_str(), data.size());
+}
+
+std::string base64encode(const void* data, size_t len) {
+    const char* base64 =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+    std::string ret;
+    ret.reserve(len * 4 / 3 + 2);
+
+    const unsigned char* ptr = (const unsigned char*)data;
+    const unsigned char* end = ptr + len;
+
+    while(ptr < end) {
+        unsigned int packed = 0;
+        int i = 0;
+        int padding = 0;
+        for(; i < 3 && ptr < end; ++i, ++ptr) {
+            packed = (packed << 8) | *ptr;
         }
+        if(i == 2) {
+            padding = 1;
+        } else if (i == 1) {
+            padding = 2;
+        }
+        for(; i < 3; ++i) {
+            packed <<= 8;
+        }
+
+        ret.append(1, base64[packed >> 18]);
+        ret.append(1, base64[(packed >> 12) & 0x3f]);
+        if(padding != 2) {
+            ret.append(1, base64[(packed >> 6) & 0x3f]);
+        }
+        if(padding == 0) {
+            ret.append(1, base64[packed & 0x3f]);
+        }
+        ret.append(padding, '=');
     }
 
-    if (i) {
-        for (j = i; j < 3; j++) {
-            char_array_3[j] = '\0';
-        }
-
-        char_array_4[0] = (char_array_3[0] & 0xfc) >> 2;
-        char_array_4[1] = ((char_array_3[0] & 0x03) << 4) + ((char_array_3[1] & 0xf0) >> 4);
-        char_array_4[2] = ((char_array_3[1] & 0x0f) << 2) + ((char_array_3[2] & 0xc0) >> 6);
-
-        for (j = 0; j < i + 1; j++) {
-            encoded += base64_chars[char_array_4[j]];
-        }
-
-        while (i++ < 3) {
-            encoded += '=';
-        }
-    }
-
-    return encoded;
+    return ret;
 }
 
 
@@ -238,36 +240,19 @@ std::string random_string(int length) {
 }
 
 
-std::string sha1sum(const std::string& file_path) {
-    std::ifstream file(file_path, std::ios::binary);
-    if (!file.is_open()) {
-        std::cerr << "Error: Unable to open file: " << file_path << std::endl;
-        return "";
-    }
 
-    SHA_CTX sha_context;
-    SHA1_Init(&sha_context);
+std::string sha1sum(const std::string& data) {
+    return sha1sum(data.c_str(), data.size());
+}
 
-    char buffer[65536]; // 64KB buffer
-    while (file.read(buffer, sizeof(buffer))) {
-        SHA1_Update(&sha_context, buffer, file.gcount());
-    }
-
-    if (!file.eof()) {
-        std::cerr << "Error: Failed to read file: " << file_path << std::endl;
-        return "";
-    }
-
-    unsigned char hash[SHA_DIGEST_LENGTH];
-    SHA1_Final(hash, &sha_context);
-
-    std::stringstream sha_stream;
-    sha_stream << std::hex << std::setfill('0');
-    for (int i = 0; i < SHA_DIGEST_LENGTH; ++i) {
-        sha_stream << std::setw(2) << static_cast<unsigned>(hash[i]);
-    }
-
-    return sha_stream.str();
+std::string sha1sum(const void *data, size_t len) {
+    SHA_CTX ctx;
+    SHA1_Init(&ctx);
+    SHA1_Update(&ctx, data, len);
+    std::string result;
+    result.resize(SHA_DIGEST_LENGTH);
+    SHA1_Final((unsigned char*)&result[0], &ctx);
+    return result;
 }
 
 }

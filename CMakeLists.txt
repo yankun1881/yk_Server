@@ -4,7 +4,7 @@ project(yk)
 
 
 set(CMAKE_VERBOSE_MAKEFILE NO)
-set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -rdynamic -O0 -ggdb -std=c++11 -Wall -Wno-deprecated -Werror -Wno-unused-function")
+set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -rdynamic -O0 -ggdb -std=c++11 -Wall -Wno-deprecated -Werror -Wno-unused-function -Wno-deprecated-declarations")
 
 include_directories(.)
 
@@ -13,7 +13,8 @@ include_directories(/usr/include)
 link_directories(/usr/lib)
 
 find_package(yaml-cpp REQUIRED)
-
+find_package(jsoncpp REQUIRED)
+find_package(OpenSSL REQUIRED)
 
 set(
     LIB_SRC
@@ -48,6 +49,15 @@ set(
     yk/module.cc
     yk/library.cc
     yk/worker.cc
+    http/ws_session.cc
+    http/ws_servlet.cc
+    http/ws_server.cc
+    http/ws_connection.cc
+    
+    chat/chat_servlet.cc
+    chat/myModule.cc
+    chat/protocol.cc
+    chat/resource_servlet.cc
 )
 add_library(yk SHARED ${LIB_SRC})
 #add_library(yk_static  STATIC$ {LIB_SRC})
@@ -61,6 +71,8 @@ set(LIB_LIB
     pthread
     dl
     yaml-cpp
+    OpenSSL::Crypto
+    jsoncpp
     )
     
 function(add_test_executable NAME)
@@ -89,6 +101,9 @@ add_test_executable(http_server)
 add_test_executable(test_daemon)
 add_test_executable(test_env)
 add_test_executable(test_application)
+add_test_executable(test_ws_client)
+add_test_executable(test_ws_server)
+add_test_executable(chat_room)
 
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
