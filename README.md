@@ -5,6 +5,7 @@
  - 协程模块使用ucontext实现了协程库。协程调度采用非对称调度方式。
  - IO协程调度模块，封装了epoll（Linux），并支持定时器功能（使用epoll实现定时器，精度毫秒级）
  - 采用[http-parser](https://github.com/nodejs/http-parser)，实现了HTTP/1.1的简单协议实现和uri的解析
+ - 新增websocket协议，并采用websocket协议实现在线聊天室：http://106.54.20.64/html/index.html
 
 ## 1.日志模块
 
@@ -75,4 +76,4 @@ hook系统底层和socket相关的API，socket io相关的API，以及sleep系�
 父进程通过waitpid()检测子进程是否退出，如果子进程退出，则重新拉起子进程
 
 ## 13.服务器启动模块
-服务器启动的读取配置和启动，实现了读取日志配置，服务器类型配置，线程配置。
+服务器启动的读取配置和启动，实现了读取日志配置，服务器类型配置，线程分配配置，全部实现读取文件。
