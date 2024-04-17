@@ -37,6 +37,10 @@ int Stream::writeFixSize(const void* buffer,size_t length){
             return len;
         }
         offset += len;
+        if(left <= len){
+            left = 0;
+            continue;
+        }
         left -= len;
     }
     return length;

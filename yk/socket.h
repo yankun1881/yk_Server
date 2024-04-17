@@ -87,8 +87,8 @@ public:
     bool close();
 
     // 发送数据
-    int send(const void* buffer, size_t length, int flags = 0);
-    int send(const iovec* buffers, size_t length, int flags = 0);
+    int send(const void* buffer, size_t length, int flags = MSG_NOSIGNAL);
+    int send(const iovec* buffers, size_t length, int flags = MSG_NOSIGNAL);
     int sendTo(const void* buffer, size_t length, const Address::ptr to, int flags = 0);
     int sendTo(const iovec* buffers, size_t length, const Address::ptr to, int flags = 0);
 

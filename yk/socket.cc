@@ -230,6 +230,7 @@ int Socket::send(const void* buffer, size_t length, int flags) {
     if(isConnected()) {
         return ::send(m_sock, buffer, length, flags);
     }
+    YK_LOG_ERROR(g_logger) << "noConnected";
     return -1;
 }
 
