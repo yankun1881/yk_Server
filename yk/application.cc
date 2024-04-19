@@ -11,6 +11,8 @@
 #include "yk/module.h"
 #include "yk/worker.h"
 #include "http/ws_server.h"
+#include "mysql/sql.h"
+
 namespace yk {
 
 static yk::Logger::ptr g_logger = YK_LOG_NAME("system");
@@ -29,6 +31,9 @@ static yk::ConfigVar<std::string>::ptr g_service_discovery_zk =
     yk::Config::Lookup("service_discovery.zk"
             ,std::string("")
             , "service discovery zookeeper");
+static yk::ConfigVar<yk::SQL>::ptr g_sql_value_config =
+    yk::Config::Lookup("sql",yk::SQL(),"mysql"); 
+
 /*struct HttpServerConf
 {
     std::vector<std::string> address;   
@@ -162,8 +167,7 @@ bool Application::run() {
 
 int Application::main(int argc, char** argv) {
     YK_LOG_INFO(g_logger) << "main";
-    std::string conf_path = yk::EnvMgr::GetInstance()->getConfigPath();
-    yk::Config::LoadFromConfDir(conf_path, true);
+    
     {
         std::string pidfile = g_server_work_path->getValue()
                                     + "/" + g_server_pid_file->getValue();
@@ -201,7 +205,13 @@ int Application::run_fiber(){
     }
 
     yk::WorkerMgr::GetInstance()->init();
-
+    auto sql = SQLMgr::GetInstance();
+    *sql = g_sql_value_config->getValue();
+    if(!sql->start()){
+        YK_LOG_ERROR(g_logger) << "Database connection failure";
+    }else{
+        YK_LOG_INFO(g_logger) << "Database connection ready";    
+    }
     auto http_confs = g_servers_conf->getValue();
     std::vector<TcpServer::ptr> svrs;
     for(auto& i : http_confs) {

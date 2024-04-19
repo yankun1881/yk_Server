@@ -1,0 +1,5 @@
+sql:
+    dress: localhost
+    user: yk
+    passward: 123yankunA
+    database: my_database

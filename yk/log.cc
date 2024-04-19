@@ -6,7 +6,7 @@
 #include<string.h>
 #include<time.h>
 #include"config.h"
-
+#include"env.h"
 namespace yk{
 
 class Logger;
@@ -70,20 +70,29 @@ LogEvent::~LogEvent(){
 
 }
 
-void LogEvent::format(const char* fmt, ...){
+void LogEvent::format(const char* fmt, ...) {
+    // 使用可变参数列表初始化
     va_list al;
-    va_start(al,fmt);
-    format(fmt,al);
+    va_start(al, fmt);
+    // 调用另一个重载的 format 函数
+    format(fmt, al);
     va_end(al);
 }
-void LogEvent::format(const char* fmt,va_list al){
+
+void LogEvent::format(const char* fmt, va_list al) {
+    // 初始化一个空指针
     char* buf = nullptr;
-    int len = vasprintf(&buf,fmt,al);
-    if(len != -1){
-        m_ss << std::string(buf,len);
+    // 使用 vasprintf 函数格式化日志消息，并获取长度
+    int len = vasprintf(&buf, fmt, al);
+    // 如果格式化成功
+    if (len != -1) {
+        // 将格式化后的字符串追加到日志消息流中
+        m_ss << std::string(buf, len);
+        // 释放 buf 指向的内存
         free(buf);
     } 
 }
+
 
 
 
@@ -230,7 +239,9 @@ void Logger::fatal(LogEvent::ptr event){
 
 FileLogAppender::FileLogAppender(const std::string& filename)
 :m_filename(filename){
-    reopen();
+    if(!reopen()){
+        std::cout << filename << "open errno";
+    }
 }
 
 void FileLogAppender::log(Logger::ptr logger, LogLevel::Level level, LogEvent::ptr event)  {
@@ -242,18 +253,25 @@ void FileLogAppender::log(Logger::ptr logger, LogLevel::Level level, LogEvent::p
         }
         MutexType::Lock lock(m_mutex);
         if(!(m_filestream << m_formatter->format(logger,level,event))){
-            std::cout <<"std::cout error" << std::endl;
+            std::cout <<"file cout error" << std::endl;
         }
     } 
 }
 
-bool FileLogAppender::reopen(){
-    if(m_filestream){
+bool FileLogAppender::reopen() {
+    if (m_filestream.is_open()) {
         m_filestream.close();
-    }     
-    m_filestream.open(m_filename);
-    return !!m_filestream;
+    }
+
+    m_filestream.open(m_filename, std::ios::out | std::ios::app);
+    if (!m_filestream.is_open()) {
+        std::cerr << "Failed to open file: " << m_filename << std::endl;
+        return false;
+    }
+
+    return true;
 }
+
 
 void StdoutLogAppender::log(Logger::ptr logger, LogLevel::Level level, LogEvent::ptr event)  {
     if(level >= m_level){
@@ -722,8 +740,6 @@ struct LogIniter{
                     }
                 }
                 logger->setLevel(i.level);
-                //std::cout << "** " << i.name << " level=" << i.level
-                //<< "  " << logger << std::endl;
                 if(!i.formatter.empty()) {
                     logger->setFormatter(i.formatter);
                 }
@@ -734,14 +750,12 @@ struct LogIniter{
                     if(a.type == 1) {
                         ap.reset(new FileLogAppender(a.file));
                     } else if(a.type == 2) {
-                        ap.reset(new StdoutLogAppender);
-                        /*if(!yk::EnvMgr::GetInstance()->has("d")) {
+                        if(!yk::EnvMgr::GetInstance()->has("d")) {
                             ap.reset(new StdoutLogAppender);
                         } else {
                             continue;
-                        }*/
+                        }
                     }
-                    //ap->setLevel(a.level);
                     if(!a.formatter.empty()) {
                         LogFormatter::ptr fmt(new LogFormatter(a.formatter));
                         if(!fmt->isError()) {
