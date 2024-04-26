@@ -2,65 +2,34 @@
 #include "yk/log.h"
 namespace yk{
 static yk::Logger::ptr g_logger = YK_LOG_ROOT();
-SQL::SQL(){
-
+Conn::Conn(sql::Connection* conn,sql::Statement *stmt)
+	: m_conn(conn),m_stmt(stmt){
+	m_aliveTime = GetCurrentMS();
 }
-bool SQL::start()
+void Conn::addData(const std::string& sql)
 {
-	
-	// 进行连接
-	try
-	{
-		// 进行连接->创建驱动实例
-		driver = sql::mysql::get_driver_instance();
-		// 进行连接->进行mysql的连接
-		conn = driver->connect(this->dress, this->user, this->passward);
-		// 创建用于查询更新的句柄
-		stmt = conn->createStatement();
-		std::string useDatabaseQuery = "use ";
-		stmt->execute(useDatabaseQuery+database+";");
-		// 进行数据库的进入了
-		status = true;
-	}
-	catch (const std::exception& e)
-	{
-		YK_LOG_ERROR(g_logger) << "SQLException: " << e.what() ;
-		status = false;
-	}
-	return status;
-}
-
-void SQL::addData(const std::string& sql)
-{
-	if (!status) {
-		YK_LOG_ERROR(g_logger) << "add data error\n";
-		return;
-	}
-	conn->setAutoCommit(false); // 禁用自动提交
+	m_aliveTime = GetCurrentMS();
+	m_conn->setAutoCommit(false); // 禁用自动提交
 	sql::PreparedStatement* Ps = nullptr;
 	try {
-		Ps = conn->prepareStatement(sql);
+		Ps = m_conn->prepareStatement(sql);
 		Ps->executeUpdate();
-		conn->commit(); // 提交事务
+		m_conn->commit(); // 提交事务
 	}
 	catch (sql::SQLException& e) {
-		conn->rollback(); // 回滚事务
+		m_conn->rollback(); // 回滚事务
 	}
-
 	if (Ps) {
 		delete Ps;
 	}
 }
 
-void SQL::deleteData(const std::string& sql)
+void Conn::deleteData(const std::string& sql)
 {
-	if (!status) {
-		YK_LOG_ERROR(g_logger) << "delete data error\n" << std::endl;
-		return;
-	}
+	m_aliveTime = GetCurrentMS();
 	try
 	{
-		stmt->execute(sql);
+		m_stmt->execute(sql);
 	}
 	catch (const std::exception& e)
 	{
@@ -68,17 +37,14 @@ void SQL::deleteData(const std::string& sql)
 	}
 }
 
-void SQL::updataData(const std::string& sql)
+void Conn::updataData(const std::string& sql)
 {
-	if (!status) {
-		YK_LOG_ERROR(g_logger) << "updata data error\n" << std::endl;
-		return;
-	}
+	m_aliveTime = GetCurrentMS();
 	sql::PreparedStatement* ps = nullptr;
 	try
 	{
 		// 预处理语句
-		ps = conn->prepareStatement(sql);
+		ps = m_conn->prepareStatement(sql);
 		ps->executeUpdate();
 	}
 	catch (const std::exception& e)
@@ -88,19 +54,20 @@ void SQL::updataData(const std::string& sql)
 	if (ps) {
 		delete ps;
 	}
+
 }
 
 
-SQL::~SQL()
+Conn::~Conn()
 {
-	if (stmt) {
-		delete stmt;
-		stmt = nullptr;
+	if (m_stmt) {
+		delete m_stmt;
+		m_stmt = nullptr;
 	}
-	if (conn) {
-		conn->close();
-		delete conn;
-		conn = nullptr;
+	if (m_conn) {
+		m_conn->close();
+		delete m_conn;
+		m_conn = nullptr;
 	}
 }
 

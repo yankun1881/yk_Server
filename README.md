@@ -156,4 +156,4 @@ hook系统底层和socket相关的API，socket io相关的API，以及sleep系�
 websocket继承http ，复用http的连接
  
  ### mysql 连接
- 可以通过读取配置进行mysql的连接，暂时未写连接池。
+ 可以通过读取配置进行mysql的连接，新增数据库连接池，可配置超时时间以及最少连接数。

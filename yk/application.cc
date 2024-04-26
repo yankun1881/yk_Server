@@ -1,8 +1,8 @@
 #include "application.h"
 
+#include <functional>
 #include <unistd.h>
 #include <signal.h>
-
 #include "yk/tcp_server.h"
 #include "yk/daemon.h"
 #include "yk/config.h"
@@ -11,7 +11,7 @@
 #include "yk/module.h"
 #include "yk/worker.h"
 #include "http/ws_server.h"
-#include "mysql/sql.h"
+#include "mysql/conn_pool.h"
 
 namespace yk {
 
@@ -31,8 +31,8 @@ static yk::ConfigVar<std::string>::ptr g_service_discovery_zk =
     yk::Config::Lookup("service_discovery.zk"
             ,std::string("")
             , "service discovery zookeeper");
-static yk::ConfigVar<yk::SQL>::ptr g_sql_value_config =
-    yk::Config::Lookup("sql",yk::SQL(),"mysql"); 
+static yk::ConfigVar<yk::ConnPool>::ptr g_sql_value_config =
+    yk::Config::Lookup("sql",yk::ConnPool(),"mysql"); 
 
 /*struct HttpServerConf
 {
@@ -203,15 +203,17 @@ int Application::run_fiber(){
     if(has_error) {
         _exit(0);
     }
+    //暂时先只读取一个数据库，开两个线程进行连接池的生成和销毁
+    auto sql = ConnPoolMgr::GetInstance();
+    *sql = g_sql_value_config->getValue();
+    sql->init();
+    Thread tpc(std::bind(&ConnPool::produceConn,sql),"produceConn");
+    Thread trc(std::bind(&ConnPool::recycleConn,sql),"recycleConn");
 
     yk::WorkerMgr::GetInstance()->init();
-    auto sql = SQLMgr::GetInstance();
-    *sql = g_sql_value_config->getValue();
-    if(!sql->start()){
-        YK_LOG_ERROR(g_logger) << "Database connection failure";
-    }else{
-        YK_LOG_INFO(g_logger) << "Database connection ready";    
-    }
+
+
+
     auto http_confs = g_servers_conf->getValue();
     std::vector<TcpServer::ptr> svrs;
     for(auto& i : http_confs) {
