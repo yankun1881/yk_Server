@@ -187,6 +187,22 @@ int Application::main(int argc, char** argv) {
     return 0;
 }
 
+int Application::run_thread(){
+
+    //暂时先只读取一个数据库，开两个线程进行连接池的生成和销毁
+    auto sql = ConnPoolMgr::GetInstance();
+    *sql = g_sql_value_config->getValue();
+    sql->init();
+    Thread tpc(std::bind(&ConnPool::produceConn,sql),"produceConn");
+    Thread trc(std::bind(&ConnPool::recycleConn,sql),"recycleConn");
+
+    //日志存储文件每日换一个
+    Thread trl(std::bind(&LoggerManager::changeFileName,LoggerMgr::GetInstance()),"logChangeName");
+    
+    return 0;
+}
+
+
 
 int Application::run_fiber(){
     std::vector<Module::ptr> modules;
@@ -212,7 +228,7 @@ int Application::run_fiber(){
 
     yk::WorkerMgr::GetInstance()->init();
 
-
+    Thread trl(std::bind(&LoggerManager::changeFileName,LoggerMgr::GetInstance()),"logChangeName");
 
     auto http_confs = g_servers_conf->getValue();
     std::vector<TcpServer::ptr> svrs;

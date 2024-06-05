@@ -21,11 +21,13 @@
 
   
 
-支持流式日志风格写日志和格式化风格写日志，支持日志格式自定义，日志级别，多日志分离等等功能
+支持流式日志风格写日志和格式化风格写日志，支持日志格式自定义，日志级别，多日志分离等等功能<br />
 
-流式日志使用：YK_LOG_INFO(g_logger) << "this is a log" ;
+默认支持每日创建新日志文件，配置路径为相对路径。<br />
 
-格式化日志使用：YK_LOG_FMT_INFO(g_logger, "%d{%Y-%m-%d %H:%M:%S}%T%t%T%N%T%F%T[%p]%T[%c]%T%f:%l%T%m%n", "this is a log");
+流式日志使用：YK_LOG_INFO(g_logger) << "this is a log" ;<br />
+
+格式化日志使用：YK_LOG_FMT_INFO(g_logger, "%d{%Y-%m-%d %H:%M:%S}%T%t%T%N%T%F%T[%p]%T[%c]%T%f:%l%T%m%n", "this is a log");<br />
 
   
 
@@ -142,8 +144,8 @@ hook系统底层和socket相关的API，socket io相关的API，以及sleep系�
 仿照java的servlet，实现了一套Servlet接口，实现了ServletDispatch，FunctionServlet。NotFoundServlet。支持uri的精准匹配，模糊匹配等功能。和HTTP模块，一起提供HTTP服务器功能
 
   
-## 12.Reactor模块
-  采用的是 Reactor 事件处理模式。在《Linux高性能服务器编程》中，对于 Reactor 模型的描述如下：**主线程（即 I/O 处理单元）只负责监听文件描述符上是否有事件发生，有的话就立即将该事件通知工作线程（即逻辑单元）。此外，主线程不做任何其他实质性的工作。读写数据、接受新的连接，以及处理客户请求均在工作线程中完成**。
+## 12.工作线程模块
+  分离工作线程，分为io线程，accept线程。
 
 ## 13.服务器启动模块
 
@@ -156,4 +158,4 @@ hook系统底层和socket相关的API，socket io相关的API，以及sleep系�
 websocket继承http ，复用http的连接
  
  ### mysql 连接
- 可以通过读取配置进行mysql的连接，新增数据库连接池，可配置超时时间以及最少连接数。
+ 可以通过读取配置进行mysql的连接，新增数据库连接池，可配置超时时间以及最少连接数。  

@@ -7,6 +7,7 @@
 #include<time.h>
 #include"config.h"
 #include"env.h"
+#include"util.h"
 namespace yk{
 
 class Logger;
@@ -262,8 +263,8 @@ bool FileLogAppender::reopen() {
     if (m_filestream.is_open()) {
         m_filestream.close();
     }
-
-    m_filestream.open(m_filename, std::ios::out | std::ios::app);
+    auto s = yk::EnvMgr::GetInstance()->getAbsolutePath(m_filename+m_time+".txt");
+    m_filestream.open(s, std::ios::out | std::ios::app);
     if (!m_filestream.is_open()) {
         std::cerr << "Failed to open file: " << m_filename << std::endl;
         return false;
@@ -288,7 +289,10 @@ std::string StdoutLogAppender::toYamlString() {
     ss << node;
     return ss.str();
 }
-
+void FileLogAppender::setTime(std::string s){
+        m_time = s;
+        reopen();
+}
 std::string FileLogAppender::toYamlString() {
     MutexType::Lock lock(m_mutex);
     YAML::Node node;
@@ -580,7 +584,23 @@ LogFormatter::LogFormatter(const std::string & pattern)
         logger->m_root = m_root;
         return logger;
     }
-    
+    int LoggerManager::changeFileName(){
+        while(true){
+            usleep(GetMillisUntilNextDay());
+            MutexType::Lock lock(m_mutex);
+            for(auto& l : m_loggers){
+                for(auto& appender : l.second->m_appenders){
+                    auto fileAppender = std::dynamic_pointer_cast<FileLogAppender>(appender);
+                    if(fileAppender != nullptr){
+                        auto s = TimeToStr(time(0),"%Y%m%d");
+                        fileAppender->setTime(s);
+                    }
+                }
+            }
+        }
+        
+        return 0;
+    }
 
 
     struct LogAppenderDefine{
@@ -716,8 +736,9 @@ public:
     }
 };
 
-yk::ConfigVar<std::set<LogDefine>>::ptr g_log_defines = 
+static yk::ConfigVar<std::set<LogDefine>>::ptr g_log_defines = 
     yk::Config::Lookup("logs",std::set<LogDefine>(),"logs config");
+
 
 
 //从配置中读取 
@@ -748,7 +769,10 @@ struct LogIniter{
                 for(auto& a : i.appenders) {
                     yk::LogAppender::ptr ap;
                     if(a.type == 1) {
-                        ap.reset(new FileLogAppender(a.file));
+                        auto s = TimeToStr(time(0),"%Y%m%d");
+                        FileLogAppender::ptr fileLogAppender(new FileLogAppender(a.file));
+                        fileLogAppender->setTime(s);
+                        ap = fileLogAppender;
                     } else if(a.type == 2) {
                         if(!yk::EnvMgr::GetInstance()->has("d")) {
                             ap.reset(new StdoutLogAppender);

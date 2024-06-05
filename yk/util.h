@@ -28,6 +28,8 @@ uint64_t GetCurrentUS();
 std::string TimeToStr(time_t ts = time(0), const std::string& format = "%Y-%m-%d %H:%M:%S");
 //string转换为时间戳
 time_t StrToTime(const char* str, const char* format = "%Y-%m-%d %H:%M:%S");
+//到达下一天需要多少毫秒
+uint64_t GetMillisUntilNextDay();
 
 class FSUtil{
 public:

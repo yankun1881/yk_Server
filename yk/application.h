@@ -19,6 +19,9 @@ public:
 private:
     int main(int argc, char** argv);
     int run_fiber();
+
+    //启动线程
+    int run_thread();
 private:
     int m_argc = 0;
     char** m_argv = nullptr;

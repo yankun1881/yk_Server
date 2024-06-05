@@ -243,9 +243,10 @@ public:
     //重新打开文件，文件打开成功返回true
     bool reopen();
     std::string toYamlString() override;
-
+    void setTime(std::string s);
     
 private:
+    std::string m_time;
     std::string m_filename;
     std::ofstream m_filestream;
     uint64_t m_lastTime = 0;
@@ -262,6 +263,8 @@ public:
     Logger::ptr getRoot() const {return m_root;}
 
     std::string toYamlString();
+    //每天更改文件名
+    int changeFileName();   
 private:
 
     std::map<std::string, Logger::ptr> m_loggers;

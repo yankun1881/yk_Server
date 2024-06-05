@@ -61,6 +61,34 @@ uint64_t GetCurrentUS(){
     return tv.tv_sec *1000* 1000ul + tv.tv_usec;
 }
 
+uint64_t GetMillisUntilNextDay() {
+    // 获取当前时间的时间戳（秒）
+    time_t now = time(NULL);
+    
+    // 将时间戳转换为tm结构体
+    struct tm *tm_now = localtime(&now);
+    
+    // 复制当前时间结构体，以便我们可以修改它
+    struct tm next_day = *tm_now;
+    
+    // 将日期增加一天
+    next_day.tm_mday += 1;
+    
+    // 正常化时间结构体，以处理月份和年份的溢出
+    // mktime函数会处理这种情况，例如，如果当前是2月28日，增加一天后应该是3月1日
+    time_t next_day_time = mktime(&next_day);
+    
+    // 计算当前时间到下一天的时间戳差（秒）
+    time_t seconds_until_next_day = difftime(next_day_time, now);
+    
+    // 将秒转换为毫秒
+    uint64_t milliseconds_until_next_day = static_cast<uint64_t>(seconds_until_next_day) * 1000;
+    
+    return milliseconds_until_next_day;
+}
+
+
+
 std::string TimeToStr(time_t ts, const std::string& format) {
     struct tm tm;
     localtime_r(&ts, &tm);
