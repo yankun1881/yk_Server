@@ -47,10 +47,10 @@ Conn::ptr ConnPool::getConn(){
     m_conns.pop_front();
     return connptr;
 }
-void ConnPool::addConn(){
-    if(!m_status) return ;
+int ConnPool::addConn(){
+    if(!m_status) return 1;
     try{
-        auto conn = driver->connect(this->dress, this->user, this->passward);
+        auto conn = driver->connect(this->dress, this->user, this->password);
         auto stmt = conn->createStatement();
 		std::string useDatabaseQuery = "use ";
 		stmt->execute(useDatabaseQuery+database+";");    
@@ -59,7 +59,9 @@ void ConnPool::addConn(){
     }catch (const std::exception& e)
 	{
 		YK_LOG_ERROR(g_logger) << "SQLException: " << e.what();
+        return 1;
 	}
+    return 0;
 }
 
 void ConnPool::produceConn() {
@@ -67,8 +69,10 @@ void ConnPool::produceConn() {
         sleep(10);
         MutexType::Lock lock(m_mutex);
         while (m_conns.size() <= m_minSize) {
-            YK_LOG_ERROR(g_logger) << "conn pool size : " << m_conns.size();
-            addConn();
+            YK_LOG_INFO(g_logger) << "conn pool size : " << m_conns.size();
+            if(addConn() != 0){
+                return ;
+            }
         }
     }
 }

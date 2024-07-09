@@ -1,0 +1,19 @@
+servers:
+    - address: ["10.0.16.9:80"]
+      keepalive: 1
+      timeout: 1000
+      name: yk/1.1
+      accept_worker: accept
+      io_worker: io
+      process_worker:  io
+      type: http
+    - address: ["10.0.16.9:8081"]
+      keepalive: 1
+      timeout: 1000
+      name: yk/1.1
+      accept_worker: accept
+      io_worker: http_io
+      process_worker:  http_io
+      type: ws
+    
+    

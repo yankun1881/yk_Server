@@ -1,0 +1,7 @@
+sql:
+    dress: localhost:3390
+    user: root
+    password: shuyikang123
+    database: chat
+    minSize: 1
+    timeout: 6000000

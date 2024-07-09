@@ -19,7 +19,7 @@ public:
     ConnPool() = default;
     Conn::ptr getConn(); // 从连接池中取出一个连接
     ~ConnPool(); // 析构函数
-    void addConn(); // 增加连接
+    int addConn(); // 增加连接
     void produceConn(); // 生产数据库连接
     void recycleConn(); // 销毁数据库连接
 private:
@@ -27,7 +27,7 @@ private:
     uint64_t m_timeout = 1000*60*10; //单位ms
 	std::string dress;
 	std::string user;
-	std::string passward;
+	std::string password;
 	std::string database;
     std::list<Conn*> m_conns;    //连接池
     sql::mysql::MySQL_Driver* driver = nullptr;
@@ -49,8 +49,8 @@ public:
             YK_LOG_ERROR(YK_LOG_ROOT()) << " 获取user失败";
             return p;
         }
-        if(!node["passward"]){
-            YK_LOG_ERROR(YK_LOG_ROOT()) << " 获取passward失败";
+        if(!node["password"]){
+            YK_LOG_ERROR(YK_LOG_ROOT()) << " 获取password失败";
             return p;
         }
         if(!node["database"]){
@@ -67,7 +67,7 @@ public:
         }
         p.dress = node["dress"].as<std::string>();
         p.user = node["user"].as<std::string>();
-        p.passward = node["passward"].as<std::string>();
+        p.password = node["password"].as<std::string>();
         p.database = node["database"].as<std::string>();
         p.m_minSize = node["minSize"].as<size_t>(); 
         p.m_timeout = node["timeout"].as<uint64_t>(); 
@@ -82,7 +82,7 @@ public:
         YAML::Node node;
         node["dress"] = p.dress;
         node["user"] = p.user;
-        node["passward"] = p.passward;
+        node["password"] = p.password;
         node["database"] = p.database;
         node["minSize"] = p.m_minSize;
         node["timeout"] = p.m_timeout;

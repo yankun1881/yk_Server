@@ -1,17 +1,24 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.0)
 project(yk)
-
-
 
 set(CMAKE_VERBOSE_MAKEFILE NO)
 set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -rdynamic -O0 -ggdb -std=c++11 -Wall -Wno-deprecated -Werror -Wno-unused-function -Wno-deprecated-declarations")
 
 include_directories(.)
-
 include_directories(/usr/include)
 
-link_directories(/usr/lib)
+# 设置 MySQLCppCONN 库的路径
+set(MySQLCppCONN_INCLUDE_DIRS "/usr/include/cppconn")
+set(MySQLCppCONN_LIBRARIES "/usr/lib/x86_64-linux-gnu/libmysqlcppconn.so")
 
+# 添加 MySQLCppCONN 库的包含目录
+include_directories(${MySQLCppCONN_INCLUDE_DIRS})
+
+# 添加 MySQLCppCONN 库
+add_library(MySQLCppCONN SHARED IMPORTED)
+set_target_properties(MySQLCppCONN PROPERTIES IMPORTED_LOCATION ${MySQLCppCONN_LIBRARIES})
+
+# find_package(lredis++ REQUIRED)
 find_package(yaml-cpp REQUIRED)
 find_package(jsoncpp REQUIRED)
 find_package(OpenSSL REQUIRED)
@@ -58,18 +65,16 @@ set(
     chat/myModule.cc
     chat/protocol.cc
     chat/resource_servlet.cc
+    mysql/sql.cc
+    mysql/conn_pool.cc 
 )
 add_library(yk SHARED ${LIB_SRC})
-#add_library(yk_static  STATIC$ {LIB_SRC})
-#SET_TARGET_PROPERTIES(yk_static  PROPERTIES OUTPUT_NAME "yk")
-
-#set(LIB_LIB ${LIB_LIB} dl)
-
 
 set(LIB_LIB
     yk
     pthread
     dl
+    MySQLCppCONN
     yaml-cpp
     OpenSSL::Crypto
     jsoncpp
@@ -107,7 +112,3 @@ add_test_executable(chat_room)
 
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
-
-
-
-

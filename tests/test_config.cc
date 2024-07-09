@@ -173,7 +173,7 @@ void test_log(){
     yk::Config::LoadFromYaml(root);
     std::cout << "===============" << std::endl;
     std::cout << yk::LoggerMgr::GetInstance()->toYamlString() << std::endl;
-    YK_LOG_INFO(system_log) << "hello system" << std::endl;
+    YK_LOG_INFO(system_log) << "hello system";
 
 }
 
@@ -198,12 +198,12 @@ int main(int argc,char** argv)
     //YAML::Node root = YAML::LoadFile("/home/ubuntu/myServer/bin/conf/log.yml");
     //yk::Config::LoadFromYaml(root);
     //YK_LOG_INFO(YK_LOG_ROOT()) << g_float_value_config->getValue();
-    
+    test_log();
     //test_yaml();
     //test_config();
     //test_class();
     //testVisit();
-    yk::EnvMgr::GetInstance()->init(argc,argv);
-    test_loadconf();
+    //yk::EnvMgr::GetInstance()->init(argc,argv);
+    //test_loadconf();
     return 0;
 }

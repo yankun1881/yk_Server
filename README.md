@@ -3,7 +3,7 @@
 
   
 
-此项目主要是我跟随 [sylar](https://github.com/sylar-yin/sylar)的[从零开始开发服务器框架](https://www.bilibili.com/video/BV184411s7qF)视频完成。该项目完整的实现了一个高性能服务器框架的所需的基本模块。主要特点：
+此项目主要是我跟随 [sylar](https://github.com/sylar-yin/sylar)完成。该项目完整的实现了一个高性能服务器框架的所需的基本模块。主要特点：
 
   
 
@@ -15,7 +15,33 @@
 
 - 新增websocket协议，并采用websocket协议实现在线聊天室：http://106.54.20.64/html/index.html
 
-  
+
+### 项目环境
+
+- Ubuntu 22.04.4 LTS
+
+## 项目依赖
+
+# CMake 
+sudo apt install cmake
+
+# yamlcpp
+sudo apt install libyaml-cpp-dev
+
+# jsoncpp
+sudo apt install libjsoncpp-dev
+
+# OpenSSL
+sudo apt install libssl-dev
+
+# MySQLCppCONN
+sudo apt install libboost-all-dev
+
+# boost库
+sudo apt install libboost-all-dev
+
+
+### 项目介绍
 
 ## 1.日志模块
 
