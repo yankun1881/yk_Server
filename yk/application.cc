@@ -12,7 +12,7 @@
 #include "yk/worker.h"
 #include "http/ws_server.h"
 #include "mysql/conn_pool.h"
-
+#include "redis/redis.h"
 namespace yk {
 
 static yk::Logger::ptr g_logger = YK_LOG_NAME("system");
@@ -33,7 +33,8 @@ static yk::ConfigVar<std::string>::ptr g_service_discovery_zk =
             , "service discovery zookeeper");
 static yk::ConfigVar<yk::ConnPool>::ptr g_sql_value_config =
     yk::Config::Lookup("sql",yk::ConnPool(),"mysql"); 
-
+static yk::ConfigVar<yk::RedisConn>::ptr g_redis_value_config =
+    yk::Config::Lookup("redis",yk::RedisConn(),"redis"); 
 /*struct HttpServerConf
 {
     std::vector<std::string> address;   
@@ -222,10 +223,11 @@ int Application::run_fiber(){
     //暂时先只读取一个数据库，开两个线程进行连接池的生成和销毁
     auto sql = ConnPoolMgr::GetInstance();
     *sql = g_sql_value_config->getValue();
-    sql->init();
-    Thread tpc(std::bind(&ConnPool::produceConn,sql),"produceConn");
-    Thread trc(std::bind(&ConnPool::recycleConn,sql),"recycleConn");
-
+    if(sql->init() == 0){
+        Thread tpc(std::bind(&ConnPool::produceConn,sql),"produceConn");
+        Thread trc(std::bind(&ConnPool::recycleConn,sql),"recycleConn");
+    }
+    
     yk::WorkerMgr::GetInstance()->init();
 
     Thread trl(std::bind(&LoggerManager::changeFileName,LoggerMgr::GetInstance()),"logChangeName");

@@ -18,10 +18,23 @@ include_directories(${MySQLCppCONN_INCLUDE_DIRS})
 add_library(MySQLCppCONN SHARED IMPORTED)
 set_target_properties(MySQLCppCONN PROPERTIES IMPORTED_LOCATION ${MySQLCppCONN_LIBRARIES})
 
-# find_package(lredis++ REQUIRED)
+# hiredis的动态库
+set(hiredis "/usr/lib/x86_64-linux-gnu/libhiredis.so")
+
+# 添加 hiredis 库的包含目录
+include_directories("/usr/include/hiredis")
+
+# 添加redis++的动态库
+set(redis++ "/home/ubuntu/redis-plus-plus/build/libredis++.so")
+
+# 添加 redis++ 库的包含目录
+include_directories("/home/ubuntu/redis-plus-plus/src")
+
 find_package(yaml-cpp REQUIRED)
 find_package(jsoncpp REQUIRED)
 find_package(OpenSSL REQUIRED)
+
+
 
 set(
     LIB_SRC
@@ -67,6 +80,7 @@ set(
     chat/resource_servlet.cc
     mysql/sql.cc
     mysql/conn_pool.cc 
+    redis/redis.cc
 )
 add_library(yk SHARED ${LIB_SRC})
 
@@ -78,6 +92,8 @@ set(LIB_LIB
     yaml-cpp
     OpenSSL::Crypto
     jsoncpp
+    hiredis
+    ${redis++} 
     )
     
 function(add_test_executable NAME)

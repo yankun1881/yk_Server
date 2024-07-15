@@ -35,7 +35,7 @@ sudo apt install libjsoncpp-dev
 sudo apt install libssl-dev
 
 # MySQLCppCONN
-sudo apt install libboost-all-dev
+sudo apt install libmysqlcppconn-dev
 
 # boost库
 sudo apt install libboost-all-dev
