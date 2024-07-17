@@ -12,9 +12,9 @@ ConnPool::~ConnPool(){
         delete driver;
     }
 }
-void ConnPool::init(){
+int ConnPool::init(){
     if(m_status){
-        return ;
+        return 0;
     }
     try{
         // 进行连接->创建驱动实例
@@ -23,8 +23,10 @@ void ConnPool::init(){
 	{
 		YK_LOG_ERROR(g_logger) << "SQLException: " << e.what() ;
 		m_status = false;
-	}
+        return 1;
+    }
     m_status = true;
+    return 0;
 }
 Conn::ptr ConnPool::getConn(){
     MutexType::Lock lock(m_mutex);

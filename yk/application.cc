@@ -193,6 +193,8 @@ int Application::run_thread(){
     //暂时先只读取一个数据库，开两个线程进行连接池的生成和销毁
     auto sql = ConnPoolMgr::GetInstance();
     *sql = g_sql_value_config->getValue();
+    auto redis = RedisConnMgr::GetInstance();
+    *redis = g_redis_value_config->getValue();
     sql->init();
     Thread tpc(std::bind(&ConnPool::produceConn,sql),"produceConn");
     Thread trc(std::bind(&ConnPool::recycleConn,sql),"recycleConn");
@@ -223,6 +225,8 @@ int Application::run_fiber(){
     //暂时先只读取一个数据库，开两个线程进行连接池的生成和销毁
     auto sql = ConnPoolMgr::GetInstance();
     *sql = g_sql_value_config->getValue();
+    auto redis = RedisConnMgr::GetInstance();
+    *redis = g_redis_value_config->getValue();
     if(sql->init() == 0){
         Thread tpc(std::bind(&ConnPool::produceConn,sql),"produceConn");
         Thread trc(std::bind(&ConnPool::recycleConn,sql),"recycleConn");

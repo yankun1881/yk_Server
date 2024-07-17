@@ -15,13 +15,14 @@ friend class LexicalCast<ConnPool, std::string>;
 public:
     typedef std::shared_ptr<ConnPool> ptr;
     typedef yk::Mutex MutexType;
-    void init();        //读取日志之后必须初始化
+    int init();        //读取日志之后必须初始化
     ConnPool() = default;
     Conn::ptr getConn(); // 从连接池中取出一个连接
     ~ConnPool(); // 析构函数
     int addConn(); // 增加连接
     void produceConn(); // 生产数据库连接
     void recycleConn(); // 销毁数据库连接
+    bool getStatus(){return m_status;}
 private:
     size_t m_minSize = 1;  //最小连接数
     uint64_t m_timeout = 1000*60*10; //单位ms
