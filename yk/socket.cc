@@ -152,6 +152,18 @@ bool Socket::bind(const Address::ptr addr){
     getLocalAddress();
     return true;
 }
+
+
+bool Socket::reconnect(uint64_t timeout_ms) {
+    if(!m_remoteAddress) {
+        SYLAR_LOG_ERROR(g_logger) << "reconnect m_remoteAddress is null";
+        return false;
+    }
+    m_localAddress.reset();
+    return connect(m_remoteAddress, timeout_ms);
+}
+
+
 bool Socket::connect(const Address::ptr addr,uint64_t timeout_ms){
     m_remoteAddress = addr;
     if(!isValid()) {

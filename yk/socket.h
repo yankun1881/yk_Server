@@ -79,6 +79,7 @@ public:
     bool bind(const Address::ptr addr);
     // 连接远程地址
     bool connect(const Address::ptr addr, uint64_t timeout_ms = -1);
+    virtual bool reconnect(uint64_t timeout_ms = -1);
     // 监听
     bool listen(int backlog = SOMAXCONN);
     // 接受连接
@@ -122,6 +123,7 @@ public:
     
     // 打印套接字信息
     std::ostream& dump(std::ostream& os) const;
+    
     
     // 取消读操作
     bool cancelRead();

@@ -129,7 +129,7 @@ private:
             thread = -1;
         }
     };
-
+    void switchTo(int thread = -1);
 private:
     MutexType m_mutex; // 互斥锁
     std::vector<Thread::ptr> m_threads; // 线程数组
@@ -146,6 +146,15 @@ protected:
     bool m_autoStop = false; // 是否自动停止
     int m_rootThread = 0; // 根线程ID
 };
+
+class SchedulerSwitcher{
+public:
+    SchedulerSwitcher(Scheduler* target = nullptr);
+    ~SchedulerSwitcher();
+private:
+    Scheduler* m_caller;
+};
+
 
 } // namespace yk
 
