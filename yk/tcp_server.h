@@ -130,6 +130,7 @@ public:
     void setType(const std::string& v){m_type = v;}
     std::vector<Socket::ptr> getSocks() const { return m_socks;}
     bool isStop(){return m_isStop;}
+    IOManager* getWorker() {return m_worker;}
 protected:
     virtual void handleClient(Socket::ptr client);
     virtual void startAccept(Socket::ptr sock);

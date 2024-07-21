@@ -81,6 +81,12 @@ set(
     mysql/sql.cc
     mysql/conn_pool.cc 
     redis/redis.cc
+    yk/protocol.cc
+    streams/async_socket_stream.cc
+    rock/rock_protocol.cc
+    rock/rock_server.cc
+    rock/rock_stream.cc
+    
 )
 add_library(yk SHARED ${LIB_SRC})
 
@@ -125,6 +131,7 @@ add_test_executable(test_application)
 add_test_executable(test_ws_client)
 add_test_executable(test_ws_server)
 add_test_executable(chat_room)
+add_test_executable(test_rock)
 
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)

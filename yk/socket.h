@@ -124,7 +124,7 @@ public:
     // 打印套接字信息
     std::ostream& dump(std::ostream& os) const;
     
-    
+    virtual std::string toString() const;
     // 取消读操作
     bool cancelRead();
     // 取消写操作

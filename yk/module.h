@@ -4,23 +4,20 @@
 #include "yk/stream.h" 
 #include "yk/singleton.h" 
 #include "yk/thread.h" 
+#include "rock/rock_protocol.h"
+#include "rock/rock_stream.h"
 #include <map> 
 #include <unordered_map> 
-
 namespace yk {
 
 class Module {
 public:
-    // 枚举模块类型
     enum Type {
         MODULE = 0, // 普通模块
         ROCK = 1,   // Rock 模块
     };
-    // 定义模块智能指针类型
     typedef std::shared_ptr<Module> ptr;
-    
-    // 构造函数，接受模块名称、版本、文件名和类型作为参数
-    Module(const std::string& name
+        Module(const std::string& name
             ,const std::string& version
             ,const std::string& filename
             ,uint32_t type = MODULE);
@@ -63,7 +60,12 @@ public:
 
     // 获取模块类型
     uint32_t getType() const { return m_type;}
-
+    
+    virtual bool handleRequest(yk::Message::ptr req
+                               ,yk::Message::ptr rsp
+                               ,yk::Stream::ptr stream);
+    virtual bool handleNotify(yk::Message::ptr notify
+                              ,yk::Stream::ptr stream);
     // 注册服务的函数
     void registerService(const std::string& server_type,
             const std::string& domain, const std::string& service);
@@ -75,27 +77,38 @@ protected:
     uint32_t m_type; // 模块类型
 };
 
+class RockModule : public Module {
+public:
+    typedef std::shared_ptr<RockModule> ptr;
+    RockModule(const std::string& name
+               ,const std::string& version
+               ,const std::string& filename);
 
-// 定义模块管理器类
+    virtual bool handleRockRequest(yk::RockRequest::ptr request
+                        ,yk::RockResponse::ptr response
+                        ,yk::RockStream::ptr stream) = 0;
+    virtual bool handleRockNotify(yk::RockNotify::ptr notify
+                        ,yk::RockStream::ptr stream) = 0;
+
+    virtual bool handleRequest(yk::Message::ptr req
+                               ,yk::Message::ptr rsp
+                               ,yk::Stream::ptr stream);
+    virtual bool handleNotify(yk::Message::ptr notify
+                              ,yk::Stream::ptr stream);
+
+};
+
 class ModuleManager {
 public:
-    // 定义读写锁类型
     typedef RWMutex RWMutexType;
 
-    // 构造函数
     ModuleManager();
 
-    // 添加模块的函数
     void add(Module::ptr m);
-    // 删除模块的函数
     void del(const std::string& name);
-    // 删除所有模块的函数
     void delAll();
-
-    // 初始化模块的函数
     void init();
 
-    // 获取指定名称的模块的函数
     Module::ptr get(const std::string& name);
 
     // 处理连接的函数

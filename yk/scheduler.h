@@ -32,7 +32,7 @@ public:
      * @brief 获取协程调度器的名称
      */ 
     const std::string& getName() const { return m_name; }
-
+    void switchTo(int thread = -1);
     /**
      * @brief 获取当前协程
      */   
@@ -129,7 +129,6 @@ private:
             thread = -1;
         }
     };
-    void switchTo(int thread = -1);
 private:
     MutexType m_mutex; // 互斥锁
     std::vector<Thread::ptr> m_threads; // 线程数组

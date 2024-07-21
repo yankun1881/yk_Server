@@ -53,6 +53,22 @@ bool Module::onServerUp() {
     return true;
 }
 
+bool Module::handleRequest(yk::Message::ptr req
+                           ,yk::Message::ptr rsp
+                           ,yk::Stream::ptr stream) {
+    YK_LOG_DEBUG(g_logger) << "handleRequest req=" << req->toString()
+            << " rsp=" << rsp->toString() << " stream=" << stream;
+    return true;
+}
+
+bool Module::handleNotify(yk::Message::ptr notify
+                          ,yk::Stream::ptr stream) {
+    YK_LOG_DEBUG(g_logger) << "handleNotify nty=" << notify->toString()
+            << " stream=" << stream;
+    return true;
+}
+
+
 void Module::registerService(const std::string& server_type,
             const std::string& domain, const std::string& service) {
     std::vector<TcpServer::ptr> svrs;
@@ -84,6 +100,29 @@ std::string Module::statusString() {
        << std::endl;
     return ss.str();
 }
+
+RockModule::RockModule(const std::string& name
+                       ,const std::string& version
+                       ,const std::string& filename)
+    :Module(name, version, filename, ROCK) {
+}
+
+bool RockModule::handleRequest(yk::Message::ptr req
+                               ,yk::Message::ptr rsp
+                               ,yk::Stream::ptr stream) {
+    auto rock_req = std::dynamic_pointer_cast<yk::RockRequest>(req);
+    auto rock_rsp = std::dynamic_pointer_cast<yk::RockResponse>(rsp);
+    auto rock_stream = std::dynamic_pointer_cast<yk::RockStream>(stream);
+    return handleRockRequest(rock_req, rock_rsp, rock_stream);
+}
+
+bool RockModule::handleNotify(yk::Message::ptr notify
+                              ,yk::Stream::ptr stream) {
+    auto rock_nty = std::dynamic_pointer_cast<yk::RockNotify>(notify);
+    auto rock_stream = std::dynamic_pointer_cast<yk::RockStream>(stream);
+    return handleRockNotify(rock_nty, rock_stream);
+}
+
 
 ModuleManager::ModuleManager() {
 }

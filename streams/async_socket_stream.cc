@@ -17,10 +17,7 @@ AsyncSocketStream::Ctx::Ctx()
 
 void AsyncSocketStream::Ctx::doRsp() {
     Scheduler* scd = scheduler;
-    // 检查调度器和协程是否为空
-    if(!yk::Atomic::compareAndSwapBool(scheduler, scd, (Scheduler*)nullptr)) {
-        return;
-    }
+
     if(!scd || !fiber) {
         return;
     }
@@ -298,7 +295,7 @@ void AsyncSocketStreamManager::setConnection(const std::vector<AsyncSocketStream
 AsyncSocketStream::ptr AsyncSocketStreamManager::get() {
     RWMutexType::ReadLock lock(m_mutex);
     for(uint32_t i = 0; i < m_size; ++i) {
-        auto idx = yk::Atomic::addFetch(m_idx, 1);
+        auto idx = m_idx++;
         if(m_datas[idx % m_size]->isConnected()) {
             return m_datas[idx % m_size];
         }

@@ -309,9 +309,6 @@ std::ostream& Scheduler::dump(std::ostream& os) {
     return os;
 }
 
-}
-
-
 SchedulerSwitcher::SchedulerSwitcher(Scheduler* target) {
     m_caller = Scheduler::GetThis();
     if(target) {
@@ -324,3 +321,7 @@ SchedulerSwitcher::~SchedulerSwitcher() {
         m_caller->switchTo();
     }
 }
+
+}
+
+

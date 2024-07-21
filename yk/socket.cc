@@ -156,7 +156,6 @@ bool Socket::bind(const Address::ptr addr){
 
 bool Socket::reconnect(uint64_t timeout_ms) {
     if(!m_remoteAddress) {
-        SYLAR_LOG_ERROR(g_logger) << "reconnect m_remoteAddress is null";
         return false;
     }
     m_localAddress.reset();
@@ -408,6 +407,12 @@ std::ostream& Socket::dump(std::ostream& os) const{
     }
     os << "]";
     return os;
+}
+
+std::string Socket::toString() const {
+    std::stringstream ss;
+    dump(ss);
+    return ss.str();
 }
 
 bool Socket::cancelRead() {
