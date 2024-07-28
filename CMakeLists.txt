@@ -21,9 +21,6 @@ set_target_properties(MySQLCppCONN PROPERTIES IMPORTED_LOCATION ${MySQLCppCONN_L
 # hiredis的动态库
 set(hiredis "/usr/lib/x86_64-linux-gnu/libhiredis.so")
 
-# 添加 hiredis 库的包含目录
-include_directories("/usr/include/hiredis")
-
 # 添加redis++的动态库
 set(redis++ "/home/ubuntu/redis-plus-plus/build/libredis++.so")
 
@@ -33,6 +30,10 @@ include_directories("/home/ubuntu/redis-plus-plus/src")
 find_package(yaml-cpp REQUIRED)
 find_package(jsoncpp REQUIRED)
 find_package(OpenSSL REQUIRED)
+include_directories("/usr/include/zookeeper")
+# zookeeper
+set(zookeeper "/usr/lib/x86_64-linux-gnu/libzookeeper_mt.so")
+
 
 
 
@@ -86,7 +87,8 @@ set(
     rock/rock_protocol.cc
     rock/rock_server.cc
     rock/rock_stream.cc
-    
+    yk/zk_client.cc
+    yk/service_discovery.cc
 )
 add_library(yk SHARED ${LIB_SRC})
 
@@ -100,6 +102,7 @@ set(LIB_LIB
     jsoncpp
     hiredis
     ${redis++} 
+    ${zookeeper} 
     )
     
 function(add_test_executable NAME)
@@ -132,6 +135,7 @@ add_test_executable(test_ws_client)
 add_test_executable(test_ws_server)
 add_test_executable(chat_room)
 add_test_executable(test_rock)
+add_test_executable(test_zk_client)
 
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
