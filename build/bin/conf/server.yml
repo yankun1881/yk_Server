@@ -1,9 +1,13 @@
 http_servers:
-  - address: ["10.0.16.9:8080"]
+  - address: ["0.0.0.0:8080"]
     keepalive: 1
     timeout: 1000
     name: yk/1.1
-  - address: ["10.0.16.9:80"]
+  - address: ["0.0.0.0:80"]
     keepalive: 0
     timeout: 2000
     name: yk/2.1
+  - address: ["0.0.0.0:8062"]
+    timeout: 1000
+    name: yk-rock/1.0
+    type: rock

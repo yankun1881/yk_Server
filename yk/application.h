@@ -2,6 +2,7 @@
 #define __YK_APPLICATION_H__
 
 #include "../http/http_server.h"
+#include "service_discovery.h"
 
 namespace yk {
 
@@ -15,6 +16,7 @@ public:
 
     bool getServer(const std::string& type, std::vector<TcpServer::ptr>& svrs);
     void listAllServer(std::map<std::string, std::vector<TcpServer::ptr> >& servers);
+    ZKServiceDiscovery::ptr getServiceDiscovery() const { return m_serviceDiscovery;}
 
 private:
     int main(int argc, char** argv);
@@ -28,7 +30,10 @@ private:
 
     std::map<std::string, std::vector<TcpServer::ptr> > m_servers;
     IOManager::ptr m_mainIOManager;
+    ZKServiceDiscovery::ptr m_serviceDiscovery;
+
     static Application* s_instance;
+
 
 };
 

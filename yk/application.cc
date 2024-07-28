@@ -13,6 +13,10 @@
 #include "http/ws_server.h"
 #include "mysql/conn_pool.h"
 #include "redis/redis.h"
+
+#include "rock/rock_server.h"
+#include "rock/rock_stream.h"
+#include "yk/zk_client.h"
 namespace yk {
 
 static yk::Logger::ptr g_logger = YK_LOG_NAME("system");
@@ -27,71 +31,19 @@ static yk::ConfigVar<std::string>::ptr g_server_pid_file =
             ,std::string("yk.pid")
             , "server pid file");
 
-static yk::ConfigVar<std::string>::ptr g_service_discovery_zk =
-    yk::Config::Lookup("service_discovery.zk"
-            ,std::string("")
-            , "service discovery zookeeper");
+static yk::ConfigVar<yk::MyServer>::ptr g_myserver_config =
+    yk::Config::Lookup("myserver",yk::MyServer(),"mysql"); 
+
 static yk::ConfigVar<yk::ConnPool>::ptr g_sql_value_config =
     yk::Config::Lookup("sql",yk::ConnPool(),"mysql"); 
 static yk::ConfigVar<yk::RedisConn>::ptr g_redis_value_config =
     yk::Config::Lookup("redis",yk::RedisConn(),"redis"); 
-/*struct HttpServerConf
-{
-    std::vector<std::string> address;   
-    int keepalive = 0;
-    int timeout = 1000*2*60;
-    std::string name;
-    bool isValid()const{
-        return !address.empty();
-    }
-    bool operator == (const HttpServerConf & oth) const{
-        return address == oth.address
-                && keepalive == oth.keepalive
-                && timeout == oth.timeout
-                && name == oth.name;
-    }
-};*/
+
+static yk::ConfigVar<yk::ZkClient>::ptr g_zkclient_config =
+    yk::Config::Lookup("zk_server",yk::ZkClient(),"zk_server"); 
 
 static yk::ConfigVar<std::vector<TcpServerConf> >::ptr g_servers_conf
     = yk::Config::Lookup("servers", std::vector<TcpServerConf>(), "http server config");
-
-
-
-
-/*template<>
-class LexicalCast<std::string,HttpServerConf>{
-public:
-    HttpServerConf operator()(const std::string& v){
-        YAML::Node node = YAML::Load(v);
-        HttpServerConf conf;
-        conf.keepalive = node["keepalive"].as<int>(conf.keepalive);
-        conf.timeout = node["timeout"].as<int>(conf.timeout);
-        conf.name = node["name"].as<std::string>(conf.name);
-        if(node["address"].IsDefined()){
-            for(size_t i = 0; i < node["address"].size();++i){
-                conf.address.push_back(node["address"][i].as<std::string>());
-            }
-        }
-        return conf;
-    }
-};
-
-template<>
-class LexicalCast<HttpServerConf,std::string>{
-public:
-    std::string operator()(const HttpServerConf& conf){
-        YAML::Node node ;
-        node["name"] = conf.name;
-        node["timeout"] = conf.timeout;
-        node["keepalive"] = conf.keepalive;
-        for(auto & i : conf.address){
-            node["address"].push_back(i);
-        }
-        std::stringstream ss;
-        ss << node;
-        return ss.str();
-    }
-};*/
 
 
 Application* Application::s_instance = nullptr;
@@ -222,16 +174,62 @@ int Application::run_fiber(){
     if(has_error) {
         _exit(0);
     }
+    auto myserver = MyServerMgr::GetInstance();
+    *myserver = g_myserver_config->getValue();
+
+
     //暂时先只读取一个数据库，开两个线程进行连接池的生成和销毁
     auto sql = ConnPoolMgr::GetInstance();
     *sql = g_sql_value_config->getValue();
+    
     auto redis = RedisConnMgr::GetInstance();
     *redis = g_redis_value_config->getValue();
+
+   
+
     if(sql->init() == 0){
         Thread tpc(std::bind(&ConnPool::produceConn,sql),"produceConn");
         Thread trc(std::bind(&ConnPool::recycleConn,sql),"recycleConn");
     }
     
+
+     auto zkClient =  ZkClientMgr::GetInstance();
+    *zkClient = g_zkclient_config->getValue();
+    if(g_zkclient_config->getValue().getEnable()) {
+        m_serviceDiscovery.reset(new ZKServiceDiscovery());
+        m_serviceDiscovery->start();
+        std::vector<TcpServer::ptr> svrs;
+        if(!getServer("http", svrs)) {
+            m_serviceDiscovery->setSelfInfo(MyServerMgr::GetInstance()->getIp() + ":0:" +std::to_string(MyServerMgr::GetInstance()->getPort()));
+        } else {
+            std::string ip_and_port;
+            for(auto& i : svrs) {
+                auto socks = i->getSocks();
+                for(auto& s : socks) {
+                    auto addr = std::dynamic_pointer_cast<IPv4Address>(s->getLocalAddress());
+                    if(!addr) {
+                        continue;
+                    }
+                    auto str = addr->toString();
+                    if(str.find("127.0.0.1") == 0) {
+                        continue;
+                    }
+                    if(str.find("0.0.0.0") == 0) {
+                        ip_and_port =MyServerMgr::GetInstance()->getIp()  + ":" + std::to_string(MyServerMgr::GetInstance()->getPort() );
+                        break;
+                    } else {
+                        ip_and_port = addr->toString();
+                    }
+                }
+                if(!ip_and_port.empty()) {
+                    break;
+                }
+            }
+            m_serviceDiscovery->setSelfInfo(ip_and_port + ":" + std::to_string(MyServerMgr::GetInstance()->getPort()));
+        }
+    }
+    
+
     yk::WorkerMgr::GetInstance()->init();
 
     Thread trl(std::bind(&LoggerManager::changeFileName,LoggerMgr::GetInstance()),"logChangeName");
@@ -312,6 +310,9 @@ int Application::run_fiber(){
         }else if(i.type == "ws") {
             server.reset(new yk::http::WSServer(
                             process_worker, io_worker, accept_worker));
+        }else if(i.type == "rock"){
+            server.reset(new yk::RockServer("rock",
+                            process_worker, io_worker, accept_worker));
         }else {
             YK_LOG_ERROR(g_logger) << "invalid server type=" << i.type
                 << LexicalCast<TcpServerConf, std::string>()(i);
@@ -333,7 +334,7 @@ int Application::run_fiber(){
         svrs.push_back(server);
     }
 
-    if(!g_service_discovery_zk->getValue().empty()) {
+    if(g_zkclient_config->getValue().getEnable()) {
 
         std::vector<TcpServer::ptr> svrs;
         if(getServer("http", svrs)){

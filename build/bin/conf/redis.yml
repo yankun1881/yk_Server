@@ -1,0 +1,4 @@
+redis:
+  Wdress:  106.54.20.64:6379
+  Rdress:  127.0.0.1:6379
+  password: 123yankunA

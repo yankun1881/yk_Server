@@ -10,6 +10,7 @@
 #include <sys/time.h>
 #include <boost/lexical_cast.hpp>
 #include <jsoncpp/json/json.h>
+
 namespace yk{
 
 pid_t GetThreadId();
@@ -101,5 +102,11 @@ std::string random_string(int length);
 std::string sha1sum(const std::string& file_path);
 
 std::string sha1sum(const void *data, size_t len);
+
+
+
+
+
+
 }
 #endif
