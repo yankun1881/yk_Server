@@ -2,12 +2,11 @@
   
 
 # C++高性能服务器框架
-
   
 
   
 
-此项目主要是我跟随 [sylar](https://github.com/sylar-yin/sylar)完成。该项目实现了一个高性能分布式服务器框架。并且使用该服务器框架开发了[在线聊天室](http://www.ykchatroom.online) 主要特点：
+该项目实现了一个高性能分布式服务器框架。并且使用该服务器框架开发了[在线聊天室](http://www.ykchatroom.online) 主要特点：
 
   
 
@@ -85,7 +84,8 @@ sudo apt install libboost-all-dev
 #### zookeeper_mt
 sudo apt install libzookeeper_mt-dev
   
-  
+#### protobuf-dev
+sudo apt-get install libprotobuf-dev protobuf-compiler
 
 ## 项目介绍
 

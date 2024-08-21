@@ -68,7 +68,7 @@ int ConnPool::addConn(){
 
 void ConnPool::produceConn() {
     while (true) {  // 生产者线程不断生产连接，直到连接池达到最小值
-        sleep(10);
+        sleep(1);
         MutexType::Lock lock(m_mutex);
         while (m_conns.size() <= m_minSize) {
             YK_LOG_INFO(g_logger) << "conn pool size : " << m_conns.size();
@@ -81,7 +81,7 @@ void ConnPool::produceConn() {
 
 void ConnPool::recycleConn(){
     while(true){
-        sleep(10);
+        sleep(1);
         MutexType::Lock lock(m_mutex);
         auto it = m_conns.begin();
         while (it != m_conns.end()) {
